@@ -39,7 +39,7 @@ Gambar di bawah dibuat dengan data contoh.
 2. Jalankan *installer*. Jika muncul peringatan Windows SmartScreen, klik **More info** lalu **Run anyway**. Peringatan ini muncul karena *installer* belum ditandatangani secara digital.
 3. Pulau berjalan otomatis dan muncul di tengah atas layar. Pengaturan ada di ikon *system tray*.
 
-Persyaratan: Windows 10 atau 11 (64 bit). Lirik membutuhkan internet. Fitur lain bekerja sepenuhnya luring.
+Persyaratan: Windows 10 atau 11 (64 bit). Lirik dan sampul cadangan membutuhkan internet. Fitur lain bekerja sepenuhnya luring.
 
 ## Cara pakai
 
@@ -77,11 +77,12 @@ docs/            PRD, arsitektur, roadmap
 
 * Pengaturan, tugas, catatan minum, dan isi rak file disimpan di `%APPDATA%\Pulau\pulau-data.json`.
 * Tidak ada akun, analitik, atau pelacakan.
-* Satu-satunya permintaan jaringan adalah pencarian lirik ke LRCLIB, yang mengirim judul, nama artis, nama album, dan durasi lagu.
+* Permintaan jaringan hanya dua: pencarian lirik ke LRCLIB (judul, nama artis, nama album, durasi) dan, bila Windows tidak menyediakan sampul, pencarian sampul ke iTunes Search (judul dan nama artis). Pencarian sampul dapat dimatikan di Pengaturan, bagian Musik.
 
 ## Pemecahan masalah
 
 * **Kapsul hanya menampilkan jam padahal musik diputar:** klik kanan ikon *tray*, pilih **Buka log media**, lalu lampirkan isinya pada *issue*.
+* **Sampul album tidak tampil:** buka **Buka log media**. Baris `thumbnail:` menjelaskan apakah pemutar tidak mengirim gambar atau gambar gagal dibaca. Pastikan juga **Cari sampul secara online** aktif di Pengaturan.
 * **Pengingat atau notifikasi tidak muncul:** periksa pengaturan **Notifikasi**.
 * **Peringatan SmartScreen:** lihat bagian Instalasi.
 

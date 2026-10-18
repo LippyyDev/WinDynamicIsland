@@ -146,6 +146,43 @@ ipcMain.on('file-drag', (e, p, icon) => {
   if (img.isEmpty()) img = nativeImage.createFromPath(ICON).resize({ width: 32, height: 32 });
   e.sender.startDrag({ file: p, icon: img });
 });
+
+/* ---------------- sampul cadangan (iTunes Search) ---------------- */
+const artCache = new Map();
+const norm = (s) => String(s || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+  .replace(/\(.*?\)|\[.*?\]/g, ' ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+async function lookupArt(title, artist) {
+  const key = norm(title) + '|' + norm(artist);
+  if (artCache.has(key)) return artCache.get(key);
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 8000);
+  let out = '';
+  try {
+    const q = new URLSearchParams({ term: `${title} ${artist || ''}`.trim(), media: 'music', entity: 'song', limit: '10' });
+    const r = await fetch('https://itunes.apple.com/search?' + q, { signal: ctl.signal });
+    const j = await r.json();
+    const nt = norm(title), na = norm(artist);
+    const hit = (j.results || []).find((x) => {
+      const xt = norm(x.trackName), xa = norm(x.artistName);
+      const tOk = xt.length >= 2 && (nt === xt || nt.includes(xt) || xt.includes(nt));
+      const aOk = !na || xa.includes(na) || na.includes(xa) || nt.includes(xa);
+      return tOk && aOk;
+    });
+    if (hit && hit.artworkUrl100) {
+      const url = hit.artworkUrl100.replace(/\/\d+x\d+bb\./, '/600x600bb.');
+      const ir = await fetch(url, { signal: ctl.signal });
+      const buf = Buffer.from(await ir.arrayBuffer());
+      if (buf.length > 500) out = 'data:image/jpeg;base64,' + buf.toString('base64');
+    }
+    log(`sampul online ${out ? 'ketemu' : 'tidak ketemu'}: ${title} | ${artist}`);
+  } catch (e) { log('sampul online gagal: ' + e.message); }
+  clearTimeout(timer);
+  if (out) { if (artCache.size > 40) artCache.delete(artCache.keys().next().value); artCache.set(key, out); }
+  return out;
+}
+ipcMain.handle('art-lookup', (_e, title, artist) => (title ? lookupArt(String(title), String(artist || '')) : ''));
+
 ipcMain.on('data-folder', () => shell.openPath(app.getPath('userData')));
 ipcMain.on('data-reset', () => {
   store.reset();

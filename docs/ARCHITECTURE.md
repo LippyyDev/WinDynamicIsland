@@ -39,7 +39,7 @@ Dua mode agar pembacaan tidak tertahan oleh perintah masuk.
 | `watch` | Memantau sesi media (SMTC) tiap 600 ms: judul, artis, album, status, posisi, durasi, sampul. Memantau Caps Lock dan volume (Core Audio via COM) tiap 200 ms. Mengirim JSON per baris. |
 | `cmd` | Membaca perintah dari stdin: `toggle`, `next`, `prev`, `seek <detik>`. |
 
-Jenis pesan: `state` (status musik), `track` (sampul), `sys` (Caps Lock dan volume). Sampul dibaca dengan `AsStream`, dengan cadangan `DataReader`, dan dicoba hingga delapan kali karena beberapa pemutar mengirim gambar terlambat. Proses berhenti sendiri bila proses induk hilang.
+Jenis pesan: `state` (status musik), `track` (sampul), `sys` (Caps Lock dan volume). Sampul dibaca dengan empat cara berurutan (`AsStreamForRead` lewat refleksi, `AsStream`, dua varian `DataReader`) dan dicoba hingga sepuluh kali karena beberapa pemutar mengirim gambar terlambat. Setiap kegagalan dicatat di log. Bila tetap kosong, proses utama mencari sampul di iTunes Search (`art-lookup`) dan mengembalikannya sebagai data URI agar CSP tetap ketat. Proses berhenti sendiri bila proses induk hilang.
 
 ### Penyimpanan (`store.js`)
 

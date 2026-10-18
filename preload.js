@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('pulau', {
   autostartGet: () => ipcRenderer.invoke('autostart-get'),
   autostartSet: (v) => ipcRenderer.send('autostart-set', v),
 
+  artLookup: (title, artist) => ipcRenderer.invoke('art-lookup', title, artist),
   fileInfo: (paths) => ipcRenderer.invoke('file-info', paths),
   fileDialog: () => ipcRenderer.invoke('file-dialog'),
   openFile: (p) => ipcRenderer.send('file-open', p),

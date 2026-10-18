@@ -7,6 +7,7 @@ const DEFAULTS = {
     lyrics: true,
     lyricsCompact: true,
     artColor: true,
+    artOnline: true,
     eyes: true,
     eyesAfter: 20,
     hoverDelay: 120,

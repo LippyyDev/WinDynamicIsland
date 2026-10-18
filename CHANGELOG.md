@@ -2,6 +2,16 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.2.1] 2026-10-18
+
+### Diperbaiki
+- Sampul album tidak tampil: pembacaan gambar kini mencoba empat cara berbeda dan mencatat penyebab kegagalan di log
+- Percobaan ulang sampul diperpanjang menjadi 10 kali karena Spotify dan *browser* kadang mengirim gambar terlambat
+- Jenis gambar dikenali dari isi berkas, bukan dari tipe yang dilaporkan Windows
+
+### Ditambahkan
+- Sampul cadangan dari iTunes Search bila Windows tidak menyediakan gambar (dapat dimatikan di Pengaturan, Musik)
+
 ## [0.2.0] 2026-10-18
 
 ### Ditambahkan

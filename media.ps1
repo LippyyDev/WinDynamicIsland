@@ -101,25 +101,84 @@ function Send($obj) {
   [Console]::Out.Flush()
 }
 
-function Read-Thumb($props) {
-  if (-not $props.Thumbnail) { return $null }
-  $rs = Await ($props.Thumbnail.OpenReadAsync()) ([Windows.Storage.Streams.IRandomAccessStreamWithContentType])
-  $ct = $rs.ContentType; if (-not $ct) { $ct = 'image/png' }
-  $bytes = $null
+$script:miRead = [System.IO.WindowsRuntimeStreamExtensions].GetMethods() | Where-Object {
+  $_.Name -eq 'AsStreamForRead' -and $_.GetParameters().Count -eq 1 } | Select-Object -First 1
+$script:thumbNote = ''
+
+function Root-Msg($ex) {
+  while ($ex.InnerException) { $ex = $ex.InnerException }
+  return $ex.Message
+}
+
+function Get-Mime($b) {
+  if ($b.Length -ge 3 -and $b[0] -eq 0xFF -and $b[1] -eq 0xD8) { return 'image/jpeg' }
+  if ($b.Length -ge 4 -and $b[0] -eq 0x89 -and $b[1] -eq 0x50) { return 'image/png' }
+  if ($b.Length -ge 3 -and $b[0] -eq 0x47 -and $b[1] -eq 0x49) { return 'image/gif' }
+  if ($b.Length -ge 2 -and $b[0] -eq 0x42 -and $b[1] -eq 0x4D) { return 'image/bmp' }
+  if ($b.Length -ge 12 -and $b[0] -eq 0x52 -and $b[8] -eq 0x57) { return 'image/webp' }
+  return 'image/png'
+}
+
+# Mencoba beberapa cara membaca stream gambar. Setiap kegagalan dicatat agar penyebabnya terlihat di log.
+function Read-StreamBytes($rs) {
+  $errs = New-Object System.Collections.Generic.List[string]
+
+  # A: AsStreamForRead lewat refleksi (menghindari pemilihan overload PowerShell)
+  try {
+    if (-not $script:miRead) { throw 'AsStreamForRead tidak ditemukan' }
+    $st = $script:miRead.Invoke($null, @($rs))
+    $ms = New-Object System.IO.MemoryStream
+    $st.CopyTo($ms); $st.Dispose()
+    if ($ms.Length -gt 16) { return ,$ms.ToArray() }
+    $errs.Add('A: kosong')
+  } catch { $errs.Add('A: ' + (Root-Msg $_.Exception)) }
+
+  # B: AsStream langsung
   try {
     $st = [System.IO.WindowsRuntimeStreamExtensions]::AsStream($rs)
     $ms = New-Object System.IO.MemoryStream
-    $st.CopyTo($ms)
-    $bytes = $ms.ToArray()
-  } catch {
+    $st.CopyTo($ms); $st.Dispose()
+    if ($ms.Length -gt 16) { return ,$ms.ToArray() }
+    $errs.Add('B: kosong')
+  } catch { $errs.Add('B: ' + (Root-Msg $_.Exception)) }
+
+  # C: DataReader (::new)
+  try {
     $size = [uint32]$rs.Size
+    if ($size -le 0) { throw 'ukuran 0' }
+    $dr = [Windows.Storage.Streams.DataReader]::new($rs.GetInputStreamAt(0))
+    $null = Await ($dr.LoadAsync($size)) ([uint32])
+    $bytes = New-Object byte[] $size
+    $dr.ReadBytes($bytes)
+    if ($bytes.Length -gt 16) { return ,$bytes }
+    $errs.Add('C: kosong')
+  } catch { $errs.Add('C: ' + (Root-Msg $_.Exception)) }
+
+  # D: DataReader (New-Object)
+  try {
+    $size = [uint32]$rs.Size
+    if ($size -le 0) { throw 'ukuran 0' }
     $dr = New-Object Windows.Storage.Streams.DataReader -ArgumentList ($rs.GetInputStreamAt(0))
     $null = Await ($dr.LoadAsync($size)) ([uint32])
     $bytes = New-Object byte[] $size
     $dr.ReadBytes($bytes)
+    if ($bytes.Length -gt 16) { return ,$bytes }
+    $errs.Add('D: kosong')
+  } catch { $errs.Add('D: ' + (Root-Msg $_.Exception)) }
+
+  throw ($errs -join ' | ')
+}
+
+function Read-Thumb($props) {
+  if (-not $props.Thumbnail) {
+    $script:thumbNote = 'aplikasi belum atau tidak menyediakan thumbnail'
+    return $null
   }
-  if (-not $bytes -or $bytes.Length -lt 16) { return $null }
-  return "data:$ct;base64," + [Convert]::ToBase64String($bytes)
+  $rs = Await ($props.Thumbnail.OpenReadAsync()) ([Windows.Storage.Streams.IRandomAccessStreamWithContentType])
+  if (-not $rs) { throw 'OpenReadAsync menghasilkan null' }
+  $bytes = Read-StreamBytes $rs
+  try { $rs.Dispose() } catch {}
+  return ('data:' + (Get-Mime $bytes) + ';base64,' + [Convert]::ToBase64String($bytes))
 }
 
 $lastKey = $null
@@ -165,15 +224,22 @@ while ($true) {
         $key = "$title|$($props.Artist)"
         if ($key -ne $lastKey) {
           $lastKey = $key
-          $thumbTries = 8
+          $thumbTries = 10
           LogMsg "lagu: $key ($($s.SourceAppUserModelId))"
         }
         if ($thumbTries -gt 0) {
           $thumbTries--
           $thumb = $null
-          try { $thumb = Read-Thumb $props } catch { if ($thumbTries -eq 0) { LogMsg "thumbnail gagal: $_" } }
-          if ($thumb) { $thumbTries = 0; Send @{ type = 'track'; key = $key; thumb = $thumb } }
-          elseif ($thumbTries -eq 7) { Send @{ type = 'track'; key = $key; thumb = $null } }
+          $script:thumbNote = ''
+          try { $thumb = Read-Thumb $props } catch { $script:thumbNote = 'gagal membaca: ' + (Root-Msg $_.Exception) }
+          if ($thumb) {
+            LogMsg ('thumbnail OK, ' + [math]::Round($thumb.Length / 1365) + ' KB')
+            $thumbTries = 0
+            Send @{ type = 'track'; key = $key; thumb = $thumb }
+          } else {
+            if ($thumbTries -eq 9) { Send @{ type = 'track'; key = $key; thumb = $null } }
+            if ($thumbTries -eq 9 -or $thumbTries -eq 0) { LogMsg ('thumbnail: ' + $script:thumbNote) }
+          }
         }
         if (-not $title) {
           Send @{ type = 'state'; none = $true }

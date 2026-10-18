@@ -10,6 +10,7 @@ P.mods.music = (() => {
   let base = { pos: 0, t: performance.now() };
   let art = null, accentFromArt = null;
   let lyr = [], lyrMsg = '', lyrKey = '', curIdx = -2;
+  let artTimer = 0;
 
   const hasTrack = () => !st.none;
   const playing = () => !st.none && st.status === 'Playing';
@@ -132,6 +133,20 @@ P.mods.music = (() => {
     return st.artist ? `${st.title}  ·  ${st.artist}` : st.title;
   }
 
+  // Bila Windows tidak memberi sampul, cari di iTunes (opsional di Pengaturan).
+  function scheduleArtFallback(m) {
+    clearTimeout(artTimer);
+    if (!P.S.artOnline || !window.pulau.artLookup) return;
+    const key = lyrKey;
+    artTimer = setTimeout(async () => {
+      if (art || key !== lyrKey || st.none) return;
+      try {
+        const d = await api.artLookup(m.title, m.artist);
+        if (d && !art && key === lyrKey) setArt(d);
+      } catch (_) {}
+    }, 2500);
+  }
+
   /* ---------- media ---------- */
   function prettyApp(id) {
     id = (id || '').toLowerCase();
@@ -152,7 +167,7 @@ P.mods.music = (() => {
     }
     if (key !== lyrKey) {
       lyrKey = key; curIdx = -2;
-      if (!m.none) loadLyrics(m); else { lyr = []; lyrMsg = ''; drawLyrics(); setArt(null); }
+      if (!m.none) { loadLyrics(m); scheduleArtFallback(m); } else { lyr = []; lyrMsg = ''; drawLyrics(); setArt(null); clearTimeout(artTimer); }
     }
     if (playing()) P.lastActive = Date.now();
     $('#mTitle').textContent = m.none ? 'Tidak ada yang diputar' : m.title;
