@@ -2,6 +2,11 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.4.9] 2026-10-18
+
+### Diubah
+- Efek Blur hanya berlaku saat desktop (Home) terlihat; saat ada jendela aktif, bilah memakai warna jendela itu secara Padat
+
 ## [0.4.8] 2026-10-18
 
 ### Diubah

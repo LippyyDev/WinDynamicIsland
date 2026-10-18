@@ -18,12 +18,14 @@ P.mods.menubar = (() => {
      Sumber warna (barColor): auto = warna bagian atas jendela aktif, wallpaper saat di desktop; system = hitam atau putih.
      Efek (barEffect): solid = latar penuh; blur = kaca buram diwarnai sumber warna (digambar jendela terpisah);
      transparent = tanpa latar. Warna teks dipilih dari apa yang benar-benar terlihat di belakangnya. */
+  // Blur hanya dipakai saat desktop terlihat; saat ada jendela aktif bilah memakai warna jendela (Padat)
+  const effEffect = () => { const e = (P.S && P.S.barEffect) || 'solid'; return e === 'blur' && !env.desktop ? 'solid' : e; };
   const pct = (v, d) => Math.max(0, Math.min(100, Number(v ?? d)));
   const tintAlpha = () => pct(P.S.barBlurTint, 35) / 100;   // kepekatan warna jendela aktif
   const blurPx = () => pct(P.S.barBlur, 60) * 0.3;            // 0 sampai 30 px; 0 = transparan
   function colors() {
     const S = P.S;
-    const effect = S.barEffect || 'solid';
+    const effect = effEffect();
     const base = env.dark ? BLACK : WHITE;
     const src = S.barColor !== 'system' && env.color ? env.color : base;
     let bg = src, ref = src, clear = false, tint = null;
@@ -38,7 +40,7 @@ P.mods.menubar = (() => {
   }
   let imgUri = '', imgApplied = null, lastColors = '';
   function applyImg() {
-    const want = P.S && P.S.barEffect === 'blur' && blurPx() > 0 ? imgUri : ''; // blur 0 = transparan, wallpaper asli terlihat
+    const want = P.S && effEffect() === 'blur' && blurPx() > 0 ? imgUri : ''; // blur 0 = transparan, wallpaper asli terlihat
     if (want === imgApplied) return;
     imgApplied = want;
     $('#barImg').style.backgroundImage = want ? `url("${want}")` : 'none';
