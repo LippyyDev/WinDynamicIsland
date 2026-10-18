@@ -19,7 +19,7 @@ let hitRects = [], inside = false, hitId = null, wantCursor = false;
 let env = {}, envSig = '', lastFg = null, envTick = 0;
 let barPhys = null;                         // bilah dalam piksel fisik { left, right, bottom }
 let winColor = null, fgKey = '', sampleTimer = null, lastSample = 0, sampleRuns = 0;
-let tintKey = '';
+let tintKey = '', clipKey = '';
 let userHidden = false, fullscreenHidden = false;
 let lastSettings = null;
 
@@ -113,13 +113,28 @@ function applyBlur(force) {
     setImmediate(pollEnv);
   }
 }
+// Tinggi bilah dalam piksel fisik. Jendela blur dipotong tepat sebesar ini.
+function clipBlur() {
+  if (!blurWin || blurWin.isDestroyed()) return;
+  const s = store.get('settings');
+  const b = primaryBounds();
+  const barH = Math.max(20, Math.min(60, Number(s.barHeight) || 32));
+  const phys = screen.dipToScreenRect(blurWin, { x: b.x, y: b.y, width: b.width, height: barH });
+  const real = blur.clip(hwndOf(blurWin), phys.width, phys.height);
+  const key = real ? `${real.w}x${real.h} -> ${phys.width}x${phys.height}` : '';
+  if (key !== clipKey) {
+    clipKey = key;
+    log.info('blur', real ? `Jendela blur ${real.w}x${real.h} px, dipotong ke bilah ${phys.width}x${phys.height} px (skala layar ${screen.getPrimaryDisplay().scaleFactor})` : 'Jendela blur tidak bisa dipotong: ' + blur.error());
+  }
+}
+
 function syncBlur() {
   const s = store ? store.get('settings') : null;
   const want = !!(s && win && !win.isDestroyed() && process.platform === 'win32' && s.notch && s.barEffect === 'blur' && !userHidden && !fullscreenHidden);
   if (!want) {
     if (blurWin && !blurWin.isDestroyed()) { blurWin.destroy(); log.info('blur', 'Jendela latar blur ditutup'); }
     blurWin = null;
-    tintKey = '';
+    tintKey = ''; clipKey = '';
     if (blurOk !== null) { blurOk = null; pollEnv(); }
     return;
   }
@@ -127,13 +142,14 @@ function syncBlur() {
   const barH = Math.max(20, Math.min(60, Number(s.barHeight) || 32));
   if (blurWin && !blurWin.isDestroyed()) {
     blurWin.setBounds({ x: b.x, y: b.y, width: b.width, height: barH });
+    clipBlur();
     applyBlur(false);
     return;
   }
   blurWin = new BrowserWindow({
     x: b.x, y: b.y, width: b.width, height: barH,
     frame: false, transparent: true, resizable: false, movable: false, minimizable: false, maximizable: false, focusable: false,
-    skipTaskbar: true, alwaysOnTop: true, hasShadow: false, show: false, backgroundColor: '#00000000',
+    thickFrame: false, minWidth: 1, minHeight: 1, skipTaskbar: true, alwaysOnTop: true, hasShadow: false, show: false, backgroundColor: '#00000000',
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false }
   });
   blurWin.setAlwaysOnTop(true, 'screen-saver');
@@ -141,7 +157,9 @@ function syncBlur() {
   blurWin.on('closed', () => { blurWin = null; });
   blurWin.webContents.once('did-finish-load', () => {
     if (!blurWin || blurWin.isDestroyed()) return;
+    blurWin.setBounds({ x: b.x, y: b.y, width: b.width, height: barH });
     blurWin.showInactive();
+    clipBlur();
     applyBlur(true);
     if (win && !win.isDestroyed()) win.moveTop(); // jendela pulau harus tetap di atas latar blur
   });

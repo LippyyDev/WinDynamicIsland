@@ -15,7 +15,13 @@ function load() {
     const koffi = require('koffi');
     const user32 = koffi.load('user32.dll');
     const DATA = koffi.struct('PULAU_WCAD', { attrib: 'int32', data: 'void*', size: 'size_t' });
-    F = { fn: user32.func('__stdcall', 'SetWindowCompositionAttribute', 'bool', ['intptr', koffi.pointer(DATA)]) };
+    const gdi32 = koffi.load('gdi32.dll');
+    F = {
+      fn: user32.func('__stdcall', 'SetWindowCompositionAttribute', 'bool', ['intptr', koffi.pointer(DATA)]),
+      SetWindowRgn: user32.func('__stdcall', 'SetWindowRgn', 'int', ['intptr', 'intptr', 'bool']),
+      GetWindowRect: user32.func('__stdcall', 'GetWindowRect', 'bool', ['intptr', 'void*']),
+      CreateRectRgn: gdi32.func('__stdcall', 'CreateRectRgn', 'intptr', ['int', 'int', 'int', 'int'])
+    };
   } catch (e) { loadError = e.message; F = false; }
   return F;
 }
@@ -45,4 +51,19 @@ function disable(hwnd) {
   try { setAccent(hwnd, ACCENT_DISABLED, 0); } catch (_) {}
 }
 
-module.exports = { enable, disable, available: () => !!load(), error: () => loadError };
+// Memotong jendela ke persegi w x h piksel fisik (relatif ke pojok kiri atas jendela). Efek blur ikut terpotong,
+// jadi tinggi bilah tetap tepat walau Windows membuat jendelanya lebih tinggi dari yang diminta.
+// Mengembalikan ukuran jendela sebenarnya { w, h } atau null.
+function clip(hwnd, w, h) {
+  if (!load()) return null;
+  try {
+    const rect = Buffer.alloc(16);
+    F.GetWindowRect(hwnd, rect);
+    const real = { w: rect.readInt32LE(8) - rect.readInt32LE(0), h: rect.readInt32LE(12) - rect.readInt32LE(4) };
+    const rgn = F.CreateRectRgn(0, 0, w, h); // setelah SetWindowRgn, region dimiliki sistem dan tidak boleh dihapus
+    F.SetWindowRgn(hwnd, rgn, true);
+    return real;
+  } catch (e) { loadError = e.message; return null; }
+}
+
+module.exports = { enable, disable, clip, available: () => !!load(), error: () => loadError };

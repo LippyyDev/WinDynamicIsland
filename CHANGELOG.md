@@ -2,6 +2,12 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.4.4] 2026-10-18
+
+### Diperbaiki
+- Bilah blur setinggi dua kali bilah sebenarnya sehingga menutupi title bar jendela di bawahnya. Jendela blur kini dipotong tepat setinggi bilah dengan `SetWindowRgn` dan dibuat tanpa `thickFrame`
+- Ukuran jendela blur sebenarnya dan skala layar dicatat di log
+
 ## [0.4.3] 2026-10-18
 
 ### Diperbaiki
