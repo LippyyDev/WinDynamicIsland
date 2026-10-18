@@ -243,7 +243,7 @@ function wallpaperStrip(sw, sh, barPx) {
     const srcX = Math.max(0, Math.round(((iw * scale - sw) / 2) / scale));
     const srcY = Math.max(0, Math.round(((ih * scale - sh) / 2) / scale));
     const srcW = Math.max(1, Math.min(iw - srcX, Math.round(sw / scale)));
-    const srcH = Math.max(1, Math.min(ih - srcY, Math.round((barPx + 24) / scale)));
+    const srcH = Math.max(1, Math.min(ih - srcY, Math.round((barPx + 60) / scale)));
     const strip = img.crop({ x: srcX, y: srcY, width: srcW, height: srcH }).resize({ width: Math.max(64, Math.round(sw / 3)) });
     const uri = 'data:image/jpeg;base64,' + strip.toJPEG(75).toString('base64');
     stripCache = { key, uri };

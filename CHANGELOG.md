@@ -2,6 +2,12 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.4.8] 2026-10-18
+
+### Diubah
+- **Kekuatan blur** kini mengatur seberapa kabur wallpaper (0 sampai 100%); 0% berarti transparan tanpa kabur
+- **Kepekatan warna** menjadi pengaturan terpisah untuk tinta warna bilah, sehingga warna tetap mengikuti jendela aktif walau blur 0%
+
 ## [0.4.7] 2026-10-18
 
 ### Diubah

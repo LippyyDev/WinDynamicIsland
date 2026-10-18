@@ -19,7 +19,7 @@ html, body {
 }
 body.notch #bar { display: grid; overflow: hidden; }
 .bar-img, .bar-tint { position: absolute; display: none; pointer-events: none; z-index: 0; }
-.bar-img { left: -24px; right: -24px; top: -12px; bottom: -12px; background-repeat: no-repeat; background-size: 100% auto; background-position: top center; filter: blur(12px) saturate(1.5); }
+.bar-img { left: -40px; right: -40px; top: -30px; bottom: -30px; background-repeat: no-repeat; background-size: 100% auto; background-position: top center; filter: blur(var(--bar-blur, 12px)) saturate(1.5); }
 .bar-tint { inset: 0; background: var(--bar-tint, transparent); }
 body.bar-blur .bar-img, body.bar-blur .bar-tint { display: block; }
 .mb-left, .mb-right { position: relative; z-index: 1; }

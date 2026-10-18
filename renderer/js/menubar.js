@@ -18,7 +18,9 @@ P.mods.menubar = (() => {
      Sumber warna (barColor): auto = warna bagian atas jendela aktif, wallpaper saat di desktop; system = hitam atau putih.
      Efek (barEffect): solid = latar penuh; blur = kaca buram diwarnai sumber warna (digambar jendela terpisah);
      transparent = tanpa latar. Warna teks dipilih dari apa yang benar-benar terlihat di belakangnya. */
-  const tintAlpha = () => 0.2 + 0.75 * (Math.max(0, Math.min(100, Number(P.S.barBlurTint ?? 40))) / 100);
+  const pct = (v, d) => Math.max(0, Math.min(100, Number(v ?? d)));
+  const tintAlpha = () => pct(P.S.barBlurTint, 35) / 100;   // kepekatan warna jendela aktif
+  const blurPx = () => pct(P.S.barBlur, 60) * 0.3;            // 0 sampai 30 px; 0 = transparan
   function colors() {
     const S = P.S;
     const effect = S.barEffect || 'solid';
@@ -27,7 +29,7 @@ P.mods.menubar = (() => {
     let bg = src, ref = src, clear = false, tint = null;
     if (effect === 'blur') {
       bg = null; clear = true; tint = src;
-      ref = mix(env.wall || base, src, tintAlpha()); // yang terlihat: wallpaper yang dikaburkan dan diberi tinta
+      ref = mix(env.wall || base, src, tintAlpha()); // yang terlihat: wallpaper (dikaburkan) dan diberi tinta
     } else if (effect === 'transparent') {
       bg = null; clear = true; ref = env.wall || base;
     }
@@ -36,7 +38,7 @@ P.mods.menubar = (() => {
   }
   let imgUri = '', imgApplied = null, lastColors = '';
   function applyImg() {
-    const want = P.S && P.S.barEffect === 'blur' ? imgUri : '';
+    const want = P.S && P.S.barEffect === 'blur' && blurPx() > 0 ? imgUri : ''; // blur 0 = transparan, wallpaper asli terlihat
     if (want === imgApplied) return;
     imgApplied = want;
     $('#barImg').style.backgroundImage = want ? `url("${want}")` : 'none';
@@ -45,11 +47,12 @@ P.mods.menubar = (() => {
     if (!P.S) return;
     const c = colors();
     const root = document.documentElement.style;
-    const key = JSON.stringify(c) + P.S.notch + tintAlpha();
+    const key = JSON.stringify(c) + P.S.notch + tintAlpha() + '|' + blurPx();
     if (key !== lastColors) {
       lastColors = key;
       root.setProperty('--bar-bg', c.bg ? css(c.bg) : 'transparent');
       root.setProperty('--bar-tint', c.tint ? `rgba(${c.tint.join(',')},${tintAlpha().toFixed(2)})` : 'transparent');
+      root.setProperty('--bar-blur', blurPx().toFixed(1) + 'px');
       root.setProperty('--bar-fg', css(c.fg));
       root.setProperty('--bar-shadow', !c.clear ? 'none' : c.light ? '0 1px 2px rgba(255,255,255,.4)' : '0 1px 3px rgba(0,0,0,.6)');
       document.body.classList.toggle('bar-black', !!P.S.notch && !c.clear);

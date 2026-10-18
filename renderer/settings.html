@@ -50,13 +50,14 @@
           <option value="auto">Otomatis (ikuti jendela aktif)</option>
           <option value="system">Ikuti tema sistem (hitam atau putih)</option>
         </select></label>
-      <label class="row"><div><b>Efek latar</b><span>Padat: warna penuh. Blur: wallpaper di belakang bilah dikaburkan lalu diberi tinta warna bilah. Transparan: tanpa latar, wallpaper terlihat langsung.</span></div>
+      <label class="row"><div><b>Efek latar</b><span>Padat: warna penuh. Blur: wallpaper di belakang bilah dikaburkan lalu diberi tinta warna bilah, kekuatannya bisa diatur. Transparan: tanpa latar, wallpaper terlihat langsung.</span></div>
         <select class="sel" data-k="barEffect">
           <option value="solid">Padat</option>
           <option value="blur">Blur</option>
           <option value="transparent">Transparan</option>
         </select></label>
-      <label class="row" data-when="barEffect=blur"><div><b>Kepekatan blur</b><span>Makin besar, warna makin pekat dan teks makin terbaca. Makin kecil, makin tembus pandang.</span></div><span class="num"><input type="number" data-k="barBlurTint" min="0" max="100" step="5"><em>%</em></span></label>
+      <label class="row" data-when="barEffect=blur"><div><b>Kekuatan blur</b><span>0% berarti transparan tanpa kabur, wallpaper terlihat jelas. Makin besar, wallpaper di belakang bilah makin buram.</span></div><span class="num"><input type="number" data-k="barBlur" min="0" max="100" step="5"><em>%</em></span></label>
+      <label class="row" data-when="barEffect=blur"><div><b>Kepekatan warna</b><span>Tinta warna bilah di atas blur (warna jendela aktif bila Otomatis, hitam atau putih bila Ikuti tema sistem). 0% berarti tanpa warna. Warna tetap berganti mengikuti jendela walau blur 0%.</span></div><span class="num"><input type="number" data-k="barBlurTint" min="0" max="100" step="5"><em>%</em></span></label>
       <label class="row"><div><b>Nama aplikasi aktif</b></div><input type="checkbox" class="sw" data-k="mb.app"></label>
       <label class="row"><div><b>Judul jendela</b></div><input type="checkbox" class="sw" data-k="mb.title"></label>
       <label class="row"><div><b>Wi-Fi</b><span>Kekuatan sinyal dibaca tiap 10 detik.</span></div><input type="checkbox" class="sw" data-k="mb.wifi"></label>
