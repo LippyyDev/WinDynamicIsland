@@ -80,6 +80,7 @@ function notify(a) {
   }
   logA(a.id === 'vol' || a.id === 'caps' ? 'DEBUG' : 'INFO', 'notifikasi', a.title + (a.sub ? ': ' + a.sub : ''));
   P.alertQ.push(a);
+  if (P.alertQ.length > 8) P.alertQ.splice(0, P.alertQ.length - 8);
   if (!P.alert) nextAlert();
 }
 function nextAlert() {
@@ -271,6 +272,8 @@ const BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt
 function clock() {
   const d = new Date();
   const t = hhmm(d);
+  if (t === clock.last) return; // DOM hanya disentuh saat menit berganti
+  clock.last = t;
   $('#clock').textContent = t;
   $('#hdClock').textContent = t;
   $('#hdDate').textContent = `${HARI[d.getDay()]}, ${d.getDate()} ${BLN[d.getMonth()]} ${d.getFullYear()}`;

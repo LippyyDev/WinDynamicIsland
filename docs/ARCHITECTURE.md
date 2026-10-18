@@ -55,22 +55,31 @@ Jendela pulau dibuat selebar layar. Bilah hitam digambar di antarmuka (`#bar`), 
 
 ### Bilah menu (`desktop.js`, `renderer/js/menubar.js`)
 
-Proses utama memeriksa lingkungan tiap 1 detik lalu mengirim pesan `env` hanya bila ada perubahan. Aplikasi aktif hanya dibaca bila dipakai (nama atau judul tampil di bilah, atau tema Wallpaper dan Transparan butuh tahu apakah desktop terlihat):
+Proses utama memeriksa lingkungan tiap 1 detik lalu mengirim pesan `env` hanya bila ada perubahan. Setiap data hanya dibaca bila pengaturan memakainya; dengan Ikuti tema sistem, efek Padat, dan nama aplikasi mati, tidak ada panggilan Windows sama sekali.
 
 | Data | Sumber |
 | --- | --- |
-| Aplikasi aktif dan judul | `GetForegroundWindow`, `GetWindowTextW`, `QueryFullProcessImageNameW`. Kelas `Progman` atau `WorkerW` berarti desktop. *Taskbar* dan jendela Pulau sendiri diabaikan. |
+| Aplikasi aktif dan judul | `GetForegroundWindow`, `GetWindowTextW`, `QueryFullProcessImageNameW`. Nama exe di-cache per PID (maksimal 64) dan *buffer* dipakai ulang. Kelas `Progman` atau `WorkerW` berarti desktop. *Taskbar*, Start, Alt+Tab, dan jendela Pulau sendiri diabaikan. |
+| Warna jendela aktif | Batas jendela dari `DwmGetWindowAttribute(DWMWA_EXTENDED_FRAME_BOUNDS)`, lalu satu `BitBlt` selebar jendela setinggi 1 piksel, 4 piksel di bawah bilah atau di bawah tepi atas jendela. Warna dikelompokkan 4 bit per kanal dan diambil kelompok terbanyak, sehingga teks dan ikon tidak menggeser hasil. Bila tidak ada kelompok yang mencapai 15 persen (foto, video), bilah memakai warna tema. |
 | Warna wallpaper | `SystemParametersInfoW(SPI_GETDESKWALLPAPER)`, cadangan `TranscodedWallpaper`. Rata-rata 10 persen bagian atas gambar, dihitung ulang hanya bila file berubah. |
 | Tema gelap atau terang | `nativeTheme.shouldUseDarkColors` |
 | Wi-Fi | `netsh wlan show interfaces` tiap 10 detik di PowerShell |
 
-Tema bilah: `system` (hitam saat Windows gelap, putih saat terang), `wallpaper` (warna wallpaper hanya saat desktop terlihat), `transparent` (tanpa latar), `blur` (tanpa latar di antarmuka, blur digambar jendela terpisah). Warna teks hitam atau putih dipilih dari luminans relatif (WCAG).
+Jadwal pembacaan warna jendela: 250 ms setelah fokus atau judul berubah, sekali lagi 900 ms kemudian (jendela baru sering masih beranimasi), lalu paling sering tiap 8 detik selama jendela yang sama aktif. Tidak dilakukan saat pulau terbuka atau tersembunyi. Semua objek GDI (`GetDC`, DC memori, *bitmap*) dilepas di blok `finally`, jadi tidak ada kebocoran *handle*.
 
-Versi 0.4.0 sempat membaca warna aplikasi aktif lewat `GetPixel` pada 20 titik layar. Cara itu membuat Pulau berat karena `GetPixel` pada layar lambat dan berjalan di proses utama, sehingga dihapus di 0.4.1. Klik pada logo diteruskan karena proses utama menguji beberapa area klik (`island` dan `logo`), dan hanya area `island` yang membuka pulau.
+Versi 0.4.0 memakai 20 panggilan `GetPixel` tiap 1,4 detik. Setiap `GetPixel` pada layar memaksa salinan dari GPU ke CPU, jadi biayanya 20 kali lipat satu `BitBlt` dan berjalan terus-menerus. Itu penyebab lag yang dilaporkan.
+
+Pengaturan bilah dipisah dua: sumber warna `barColor` (`auto` atau `system`) dan efek `barEffect` (`solid`, `blur`, `transparent`). Warna teks hitam atau putih dipilih dari luminans relatif (WCAG) dari apa yang benar-benar terlihat: warna latar untuk Padat, campuran wallpaper dan tinta untuk Blur, wallpaper untuk Transparan.
 
 ### Latar blur (`blur.js`)
 
-CSS `backdrop-filter` hanya mengaburkan isi halaman sendiri, bukan jendela lain di belakangnya, jadi blur sungguhan harus dibuat sistem. Saat tema **Blur** dipilih, proses utama membuat jendela kedua yang kecil, transparan, tanpa fokus, dan tembus klik, selebar layar setinggi bilah. `SetWindowCompositionAttribute` (`ACCENT_ENABLE_ACRYLICBLURBEHIND`, cadangan `ACCENT_ENABLE_BLURBEHIND`) lewat koffi mengaktifkan acrylic dengan warna tinta mengikuti tema sistem dan alpha dari pengaturan **Kepekatan blur**. Jendela pulau diletakkan di atasnya (`moveTop`) dengan latar transparan, jadi teks bilah tampil di atas kaca buram. Blur digambar DWM di kartu grafis, tanpa membaca layar. Jendela ini dibuat hanya saat tema Blur aktif dan ditutup saat tema lain dipilih. Bila pemanggilan gagal, antarmuka kembali ke warna tema sistem.
+CSS `backdrop-filter` hanya mengaburkan isi halaman sendiri, bukan jendela lain di belakangnya, jadi blur sungguhan harus dibuat sistem. Saat tema **Blur** dipilih, proses utama membuat jendela kedua yang kecil, transparan, tanpa fokus, dan tembus klik, selebar layar setinggi bilah. `SetWindowCompositionAttribute` (`ACCENT_ENABLE_ACRYLICBLURBEHIND`, cadangan `ACCENT_ENABLE_BLURBEHIND`) lewat koffi mengaktifkan acrylic dengan warna tinta dari sumber warna bilah (warna jendela aktif atau tema sistem) dan alpha dari pengaturan **Kepekatan blur**. Jendela pulau diletakkan di atasnya (`moveTop`) dengan latar transparan, jadi teks bilah tampil di atas kaca buram. Blur digambar DWM di kartu grafis, tanpa membaca layar. Jendela ini dibuat hanya saat tema Blur aktif dan ditutup saat tema lain dipilih. Tinta hanya dikirim ulang ke Windows bila warnanya berubah. Bila pemanggilan gagal, antarmuka kembali ke efek Padat.
+
+### Kinerja
+
+* Antarmuka hanya menyentuh DOM bila isinya berubah: jam ditulis saat menit berganti, ikon bilah dan variabel warna dibandingkan dulu, *progress* musik berhenti diperbarui saat lagu dijeda.
+* Antrean notifikasi dibatasi 8, cache sampul 40, cache nama exe 64, riwayat *undo* minum 20.
+* `[kinerja]` di log tiap 10 menit: total memori (`app.getAppMetrics`), *heap* proses utama, dan CPU. Peringatan dicatat bila memori lebih dari dua kali lipat nilai awal.
 
 ### Log (`logger.js`)
 

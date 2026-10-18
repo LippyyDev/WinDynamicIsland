@@ -161,6 +161,7 @@ P.mods.music = (() => {
   function media(m) {
     if (m.type === 'track') { logA('DEBUG', 'sampul', m.thumb ? 'Sampul diterima dari Windows' : 'Sampul kosong dari Windows'); setArt(m.thumb); return; }
     if (m.type !== 'state') return;
+    tickDone = false;
     const prevStatus = st.status;
     const key = m.none ? '' : `${m.title}|${m.artist}`;
     const predicted = nowPos();
@@ -183,12 +184,16 @@ P.mods.music = (() => {
   function seek(sec) {
     if (st.none) return;
     base = { pos: sec, t: performance.now() };
-    curIdx = -2;
+    curIdx = -2; tickDone = false;
     api.cmd('seek ' + sec.toFixed(2));
   }
 
+  let tickDone = false; // saat jeda, cukup gambar sekali
   function tick() {
     if (st.none) return;
+    const on = playing();
+    if (!on && tickDone) return;
+    tickDone = !on;
     const pos = nowPos();
     const pct = st.dur > 0 ? (pos / st.dur) * 100 : 0;
     $('#fill').style.width = pct + '%';
@@ -208,6 +213,7 @@ P.mods.music = (() => {
     },
     media,
     decorate(mode) {
+      tickDone = false;
       island.classList.toggle('playing', playing());
       island.classList.toggle('has-track', hasTrack());
       island.classList.toggle('no-track', !hasTrack());

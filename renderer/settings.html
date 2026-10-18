@@ -45,19 +45,18 @@
     <h2>Bilah menu</h2>
     <div class="card">
       <label class="row"><div><b>Tampilkan bilah menu</b><span>Seperti macOS: aplikasi aktif di kiri, status dan jam di kanan. Klik logo untuk menu cepat.</span></div><input type="checkbox" class="sw" data-k="menubar"></label>
-      <label class="row"><div><b>Warna bilah</b><span>Ikuti tema sistem: hitam saat Windows gelap, putih saat terang. Wallpaper: warna wallpaper hanya saat desktop terlihat, selain itu ikut tema sistem. Transparan: tanpa latar. Blur: tembus pandang dengan latar buram seperti kaca.</span></div>
-        <select class="sel" data-k="barTheme">
-          <option value="system">Ikuti tema sistem</option>
-          <option value="wallpaper">Wallpaper</option>
-          <option value="transparent">Transparan</option>
+      <label class="row"><div><b>Warna bilah</b><span>Otomatis: mengikuti warna bagian atas jendela yang sedang aktif (title bar, tab, atau ribbon), dan warna wallpaper saat di desktop. Warna dibaca hanya saat fokus berpindah.</span></div>
+        <select class="sel" data-k="barColor">
+          <option value="auto">Otomatis (ikuti jendela aktif)</option>
+          <option value="system">Ikuti tema sistem (hitam atau putih)</option>
+        </select></label>
+      <label class="row"><div><b>Efek latar</b><span>Padat: warna penuh. Blur: kaca buram yang diwarnai warna bilah. Transparan: tanpa latar, wallpaper terlihat langsung.</span></div>
+        <select class="sel" data-k="barEffect">
+          <option value="solid">Padat</option>
           <option value="blur">Blur</option>
+          <option value="transparent">Transparan</option>
         </select></label>
-      <label class="row"><div><b>Kepekatan blur</b><span>Hanya untuk warna Blur. Makin besar, makin pekat dan makin terbaca. Makin kecil, makin tembus pandang.</span></div><span class="num"><input type="number" data-k="barBlurTint" min="0" max="100" step="5"><em>%</em></span></label>
-      <label class="row"><div><b>Paduan warna wallpaper</b><span>Hanya untuk warna Wallpaper. Murni memakai warna asli. Dipadukan mencampurnya dengan tema gelap atau terang Windows agar lebih lembut.</span></div>
-        <select class="sel" data-k="barTone">
-          <option value="pure">Murni</option>
-          <option value="theme">Dipadukan dengan tema</option>
-        </select></label>
+      <label class="row" data-when="barEffect=blur"><div><b>Kepekatan blur</b><span>Makin besar, warna makin pekat dan teks makin terbaca. Makin kecil, makin tembus pandang.</span></div><span class="num"><input type="number" data-k="barBlurTint" min="0" max="100" step="5"><em>%</em></span></label>
       <label class="row"><div><b>Nama aplikasi aktif</b></div><input type="checkbox" class="sw" data-k="mb.app"></label>
       <label class="row"><div><b>Judul jendela</b></div><input type="checkbox" class="sw" data-k="mb.title"></label>
       <label class="row"><div><b>Wi-Fi</b><span>Kekuatan sinyal dibaca tiap 10 detik.</span></div><input type="checkbox" class="sw" data-k="mb.wifi"></label>

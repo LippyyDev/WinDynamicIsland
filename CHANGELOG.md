@@ -2,6 +2,23 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.4.2] 2026-10-18
+
+### Diubah
+- Pengaturan bilah dipisah: **Warna bilah** (Otomatis mengikuti jendela aktif, atau Ikuti tema sistem) dan **Efek latar** (Padat, Blur, Transparan)
+- Blur kini diwarnai warna jendela aktif bila warna Otomatis
+- Pengaturan lama dipindahkan otomatis ke pasangan warna dan efek yang setara
+
+### Ditambahkan
+- Warna Otomatis kembali, kini dengan satu `BitBlt` selebar 1 piksel yang hanya dijalankan saat fokus atau judul berubah
+- Catatan `[kinerja]` di log tiap 10 menit (memori, *heap*, CPU) dan peringatan bila memori naik lebih dari dua kali lipat
+
+### Kinerja
+- Jam, ikon bilah, dan variabel warna hanya ditulis ke DOM bila berubah
+- *Progress* musik tidak diperbarui saat lagu dijeda
+- Nama exe di-cache dan *buffer* Win32 dipakai ulang, jadi tidak ada alokasi tiap detik
+- Antrean notifikasi dibatasi 8
+
 ## [0.4.1] 2026-10-18
 
 ### Ditambahkan

@@ -2,7 +2,7 @@
 
 *Dynamic Island* untuk Windows 10 dan 11. Sebuah kapsul hitam di tengah atas layar yang menampilkan pemutar musik dengan lirik tersinkron, timer Pomodoro, pengingat minum, rak file, daftar tugas, dan notifikasi sistem. Semua data tersimpan di PC sendiri, tanpa akun dan tanpa server.
 
-> Status: versi 0.4.1. Dibuat dengan Electron. Bagian yang membaca musik dan sistem dari Windows belum diuji pada banyak perangkat, jadi laporan *bug* sangat membantu.
+> Status: versi 0.4.2. Dibuat dengan Electron. Bagian yang membaca musik dan sistem dari Windows belum diuji pada banyak perangkat, jadi laporan *bug* sangat membantu.
 
 ## Fitur
 
@@ -18,7 +18,7 @@
 | Notifikasi sistem | Pengisi daya, baterai lemah, *headphone* atau *speaker* terhubung, Caps Lock, volume. |
 | Mata saat diam | Setelah beberapa saat tanpa aktivitas, jam berganti sepasang mata yang mengikuti kursor. |
 | Mode *notch* | Area atas layar dicadangkan seperti *notch* MacBook, jadi jendela yang dimaksimalkan tidak tertutup pulau. Bilah hitam penuh, tinggi bilah dapat diatur, pulau otomatis sembunyi saat layar penuh. |
-| Bilah menu | Seperti macOS: logo dengan menu cepat, aplikasi aktif dan judul jendela di kiri, Wi-Fi, volume, baterai, tanggal dan jam di kanan. Warna bilah: Ikuti tema sistem (hitam saat Windows gelap, putih saat terang), Wallpaper (hanya saat desktop terlihat), Transparan, atau Blur (tembus pandang dengan latar buram, kepekatan dapat diatur). |
+| Bilah menu | Seperti macOS: logo dengan menu cepat, aplikasi aktif dan judul jendela di kiri, Wi-Fi, volume, baterai, tanggal dan jam di kanan. Warna bilah Otomatis mengikuti bagian atas jendela yang aktif (wallpaper saat di desktop), atau Ikuti tema sistem (hitam atau putih). Efek latar dipilih terpisah: Padat, Blur (kaca buram yang diwarnai, kepekatan dapat diatur), atau Transparan. |
 | Log aktivitas | Tiga level: Mati, Hanya galat, Semua aktivitas. Ada penampil log di Pengaturan. |
 | Pengaturan | Jendela khusus untuk semua opsi, termasuk menyalakan atau mematikan tiap halaman. |
 
@@ -64,7 +64,7 @@ npm run dist       # bangun installer di folder dist/
 
 Di Linux atau macOS, antarmuka tetap bisa dibuka untuk pengerjaan tampilan, tetapi data musik dan sistem tidak tersedia karena memakai PowerShell dan API Windows.
 
-*Installer* juga dibangun otomatis oleh GitHub Actions (`.github/workflows/build.yml`) pada setiap *push*. Untuk membuat rilis, beri *tag* `v0.4.1` dan hasilnya terlampir di halaman Releases.
+*Installer* juga dibangun otomatis oleh GitHub Actions (`.github/workflows/build.yml`) pada setiap *push*. Untuk membuat rilis, beri *tag* `v0.4.2` dan hasilnya terlampir di halaman Releases.
 
 ## Struktur proyek
 
@@ -75,7 +75,7 @@ store.js         penyimpanan lokal (satu file JSON)
 logger.js        pencatat aktivitas dan galat
 appbar.js        mode notch lewat AppBar Windows (koffi + shell32)
 blur.js          latar blur bilah (acrylic) lewat SetWindowCompositionAttribute (koffi + user32)
-desktop.js       aplikasi aktif dan warna wallpaper (koffi + user32/kernel32)
+desktop.js       aplikasi aktif, warna wallpaper, warna bagian atas jendela aktif (koffi + user32/gdi32/dwmapi)
 media.ps1        pembaca media, volume, dan Caps Lock Windows
 renderer/        antarmuka pulau dan jendela pengaturan
   js/            modul per fitur (music, pomodoro, water, shelf, todo, system)
@@ -95,6 +95,7 @@ docs/            PRD, arsitektur, roadmap
 * **Jendela masih tertutup pulau:** pastikan **Potong layar seperti notch** aktif. Jendela yang sudah terbuka mungkin perlu dimaksimalkan ulang. Bila log berisi `AppBar tidak tersedia`, laporkan sebagai *issue*.
 * **Area atas tetap kosong setelah Pulau ditutup paksa:** Windows biasanya memulihkannya sendiri. Bila tidak, buka lalu tutup Pulau dari menu *tray*, atau mulai ulang Explorer.
 * **Sampul album tidak tampil:** buka log. Baris `thumbnail:` menjelaskan apakah pemutar tidak mengirim gambar atau gambar gagal dibaca. Pastikan juga **Cari sampul secara online** aktif di Pengaturan.
+* **Ingin memastikan tidak ada kebocoran memori:** dengan log Semua aktivitas, baris `[kinerja]` dicatat tiap 10 menit berisi total memori dan CPU semua proses Pulau. Angka yang terus naik selama berjam-jam menandakan kebocoran, dan Pulau sendiri mencatat peringatan bila memori naik lebih dari dua kali lipat.
 * **Pengingat atau notifikasi tidak muncul:** periksa pengaturan **Notifikasi**.
 * **Peringatan SmartScreen:** lihat bagian Instalasi.
 

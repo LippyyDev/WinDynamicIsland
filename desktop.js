@@ -1,5 +1,7 @@
-// Info desktop untuk bilah menu: aplikasi aktif dan warna wallpaper.
-// Memakai Win32 (user32, kernel32) lewat koffi. Tidak membaca piksel layar, karena GetPixel pada layar lambat dan membuat Pulau berat. Semua fungsi aman dipanggil di luar Windows (mengembalikan null).
+// Info desktop untuk bilah menu: aplikasi aktif, warna wallpaper, dan warna bagian atas jendela aktif.
+// Memakai Win32 (user32, kernel32, gdi32, dwmapi) lewat koffi.
+// Warna jendela dibaca dengan satu BitBlt selebar jendela setinggi 1 piksel, dan hanya saat fokus atau judul berubah.
+// (Versi 0.4.0 memakai 20 kali GetPixel tiap 1,4 detik. Setiap GetPixel memaksa salinan dari GPU, itu yang membuat berat.) Semua fungsi aman dipanggil di luar Windows (mengembalikan null).
 const fs = require('fs');
 const path = require('path');
 const { nativeImage } = require('electron');
@@ -14,7 +16,22 @@ function load() {
     const koffi = require('koffi');
     const u = koffi.load('user32.dll');
     const k = koffi.load('kernel32.dll');
+    const g = koffi.load('gdi32.dll');
+    let dwm = null;
+    try { dwm = koffi.load('dwmapi.dll'); } catch (_) {}
     F = {
+      GetDC: u.func('__stdcall', 'GetDC', 'intptr', ['intptr']),
+      ReleaseDC: u.func('__stdcall', 'ReleaseDC', 'int', ['intptr', 'intptr']),
+      GetWindowRect: u.func('__stdcall', 'GetWindowRect', 'bool', ['intptr', 'void*']),
+      IsIconic: u.func('__stdcall', 'IsIconic', 'bool', ['intptr']),
+      CreateCompatibleDC: g.func('__stdcall', 'CreateCompatibleDC', 'intptr', ['intptr']),
+      CreateCompatibleBitmap: g.func('__stdcall', 'CreateCompatibleBitmap', 'intptr', ['intptr', 'int', 'int']),
+      SelectObject: g.func('__stdcall', 'SelectObject', 'intptr', ['intptr', 'intptr']),
+      BitBlt: g.func('__stdcall', 'BitBlt', 'bool', ['intptr', 'int', 'int', 'int', 'int', 'intptr', 'int', 'int', 'uint32']),
+      GetDIBits: g.func('__stdcall', 'GetDIBits', 'int', ['intptr', 'intptr', 'uint32', 'uint32', 'void*', 'void*', 'uint32']),
+      DeleteObject: g.func('__stdcall', 'DeleteObject', 'bool', ['intptr']),
+      DeleteDC: g.func('__stdcall', 'DeleteDC', 'bool', ['intptr']),
+      DwmGetWindowAttribute: dwm ? dwm.func('__stdcall', 'DwmGetWindowAttribute', 'int32', ['intptr', 'uint32', 'void*', 'uint32']) : null,
       GetForegroundWindow: u.func('__stdcall', 'GetForegroundWindow', 'intptr', []),
       GetClassNameW: u.func('__stdcall', 'GetClassNameW', 'int', ['intptr', 'void*', 'int']),
       GetWindowTextW: u.func('__stdcall', 'GetWindowTextW', 'int', ['intptr', 'void*', 'int']),
@@ -49,30 +66,92 @@ function prettyApp(exe, title) {
   return base.charAt(0).toUpperCase() + base.slice(1);
 }
 
-// Jendela yang sedang aktif
+// Jendela yang sedang aktif. Buffer dipakai ulang dan nama exe di-cache per PID agar tidak ada alokasi tiap detik.
+const CB = Buffer.alloc(512), TB = Buffer.alloc(1024), PB = Buffer.alloc(1040);
+const exeCache = new Map();
+function exeOf(f, pid) {
+  if (exeCache.has(pid)) return exeCache.get(pid);
+  let exe = '';
+  const hp = f.OpenProcess(0x1000, false, pid);
+  if (hp) {
+    try { const size = [520]; if (f.QueryFullProcessImageNameW(hp, 0, PB, size)) exe = wstr(PB, size[0]); }
+    finally { f.CloseHandle(hp); }
+  }
+  if (exeCache.size >= 64) exeCache.delete(exeCache.keys().next().value);
+  exeCache.set(pid, exe);
+  return exe;
+}
 function foreground() {
   const f = load(); if (!f) return null;
   try {
     const h = f.GetForegroundWindow();
     if (!h) return null;
-    const cb = Buffer.alloc(512);
-    const cls = wstr(cb, f.GetClassNameW(h, cb, 256));
-    const tb = Buffer.alloc(1024);
-    const title = wstr(tb, f.GetWindowTextW(h, tb, 512));
+    const cls = wstr(CB, f.GetClassNameW(h, CB, 256));
+    const title = wstr(TB, f.GetWindowTextW(h, TB, 512));
     const pid = [0];
     f.GetWindowThreadProcessId(h, pid);
-    let exe = '';
-    const hp = f.OpenProcess(0x1000, false, pid[0]);
-    if (hp) {
-      const pb = Buffer.alloc(1040), size = [520];
-      if (f.QueryFullProcessImageNameW(hp, 0, pb, size)) exe = wstr(pb, size[0]);
-      f.CloseHandle(hp);
-    }
+    const exe = exeOf(f, pid[0]);
     const desktop = cls === 'Progman' || cls === 'WorkerW';
     const shell = cls === 'Shell_TrayWnd' || cls === 'Shell_SecondaryTrayWnd' || cls === 'NotifyIconOverflowWindow' ||
-      cls === 'Windows.UI.Core.CoreWindow' || cls === 'XamlExplorerHostIslandWindow' || cls === 'TopLevelWindowForOverflowXamlIsland';
+      cls === 'Windows.UI.Core.CoreWindow' || cls === 'XamlExplorerHostIslandWindow' || cls === 'TopLevelWindowForOverflowXamlIsland' ||
+      cls === 'ForegroundStaging' || cls === 'MultitaskingViewFrame' || cls === 'TaskListThumbnailWnd';
     return { hwnd: Number(h), cls, title, exe, pid: pid[0], desktop, shell, app: desktop ? 'Desktop' : prettyApp(exe, title) };
   } catch (_) { return null; }
+}
+
+// Warna dominan pada satu baris piksel di bagian atas jendela (title bar, tab, atau ribbon).
+// bar: { left, right, bottom } bilah dalam piksel fisik. Mengembalikan [r, g, b] atau null.
+const RB = Buffer.alloc(16);
+const BMI = Buffer.alloc(44);
+function windowTopColor(hwnd, bar) {
+  const f = load(); if (!f) return null;
+  if (f.IsIconic(hwnd)) return null;
+  let ok = f.DwmGetWindowAttribute && f.DwmGetWindowAttribute(hwnd, 9, RB, 16) === 0; // DWMWA_EXTENDED_FRAME_BOUNDS, tanpa bayangan
+  if (!ok) ok = f.GetWindowRect(hwnd, RB);
+  if (!ok) return null;
+  const r = { left: RB.readInt32LE(0), top: RB.readInt32LE(4), right: RB.readInt32LE(8), bottom: RB.readInt32LE(12) };
+  const y = Math.max(r.top, bar.bottom) + 4;
+  const x0 = Math.max(r.left, bar.left) + 6, x1 = Math.min(r.right, bar.right) - 6;
+  const w = Math.min(x1 - x0, 4096);
+  if (w < 24 || y >= r.bottom - 2) return null;
+
+  let sdc = 0, mdc = 0, bmp = 0, old = 0;
+  try {
+    sdc = f.GetDC(0); if (!sdc) return null;
+    mdc = f.CreateCompatibleDC(sdc); if (!mdc) return null;
+    bmp = f.CreateCompatibleBitmap(sdc, w, 1); if (!bmp) return null;
+    old = f.SelectObject(mdc, bmp);
+    if (!f.BitBlt(mdc, 0, 0, w, 1, sdc, x0, y, 0x00CC0020)) return null; // SRCCOPY
+    f.SelectObject(mdc, old); old = 0; // bitmap harus dilepas dari DC sebelum GetDIBits
+    BMI.fill(0);
+    BMI.writeUInt32LE(40, 0); BMI.writeInt32LE(w, 4); BMI.writeInt32LE(-1, 8);
+    BMI.writeUInt16LE(1, 12); BMI.writeUInt16LE(32, 14); // 32 bit, BI_RGB
+    const px = Buffer.alloc(w * 4);
+    if (!f.GetDIBits(mdc, bmp, 0, 1, px, BMI, 0)) return null;
+    return dominant(px, w);
+  } catch (_) { return null; }
+  finally {
+    try { if (old) f.SelectObject(mdc, old); } catch (_) {}
+    try { if (bmp) f.DeleteObject(bmp); } catch (_) {}
+    try { if (mdc) f.DeleteDC(mdc); } catch (_) {}
+    try { if (sdc) f.ReleaseDC(0, sdc); } catch (_) {}
+  }
+}
+// Kelompokkan warna (4 bit per kanal), ambil kelompok terbanyak, lalu rata-rata di dalamnya.
+// Teks, ikon, dan tab aktif yang kecil tidak ikut menggeser hasil.
+function dominant(px, w) {
+  const buckets = new Map();
+  for (let i = 0; i < w; i++) {
+    const o = i * 4, b = px[o], g = px[o + 1], r = px[o + 2];
+    const k = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4);
+    let e = buckets.get(k);
+    if (!e) { e = [0, 0, 0, 0]; buckets.set(k, e); }
+    e[0] += r; e[1] += g; e[2] += b; e[3]++;
+  }
+  let best = null;
+  for (const e of buckets.values()) if (!best || e[3] > best[3]) best = e;
+  if (!best || best[3] < w * 0.15) return null; // terlalu acak (foto, video): biarkan pemanggil memakai cadangan
+  return [Math.round(best[0] / best[3]), Math.round(best[1] / best[3]), Math.round(best[2] / best[3])];
 }
 
 // Warna rata-rata bagian atas wallpaper (tempat bilah berada)
@@ -105,4 +184,4 @@ function wallpaperColor() {
   } catch (_) { return null; }
 }
 
-module.exports = { foreground, wallpaperColor, available: () => !!load(), error: () => loadError };
+module.exports = { foreground, wallpaperColor, windowTopColor, dominant, available: () => !!load(), error: () => loadError };

@@ -22,6 +22,10 @@ function fill() {
     const v = getP(S, el.dataset.k);
     if (el.type === 'checkbox') el.checked = !!v;
     else if (document.activeElement !== el) el.value = v;
+  }  // baris yang hanya relevan untuk pilihan tertentu, misalnya data-when="barEffect=blur"
+  for (const el of $$('[data-when]')) {
+    const [k, v] = el.dataset.when.split('=');
+    el.classList.toggle('hidden', String(getP(S, k)) !== v);
   }
 }
 
@@ -31,7 +35,7 @@ function bind() {
     if (el.type === 'checkbox') {
       el.addEventListener('change', () => { setP(S, k, el.checked); api.set('settings', S); toast(); });
     } else if (el.tagName === 'SELECT') {
-      el.addEventListener('change', () => { setP(S, k, el.value); api.set('settings', S); toast(); setTimeout(refreshLog, 300); });
+      el.addEventListener('change', () => { setP(S, k, el.value); api.set('settings', S); fill(); toast(); setTimeout(refreshLog, 300); });
     } else {
       el.addEventListener('change', () => {
         let v = Number(el.value);

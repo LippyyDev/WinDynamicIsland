@@ -15,27 +15,33 @@ P.mods.menubar = (() => {
   const css = (c) => `rgb(${c.join(',')})`;
 
   /* ---------- warna ----------
-     system: hitam saat Windows gelap, putih saat terang.
-     wallpaper: warna wallpaper hanya saat desktop terlihat, selain itu seperti system.
-     transparent: tanpa latar. blur: tanpa latar, blur digambar oleh jendela terpisah di proses utama.
-     Tidak ada pembacaan piksel layar, jadi tidak ada beban. */
+     Sumber warna (barColor): auto = warna bagian atas jendela aktif, wallpaper saat di desktop; system = hitam atau putih.
+     Efek (barEffect): solid = latar penuh; blur = kaca buram diwarnai sumber warna (digambar jendela terpisah);
+     transparent = tanpa latar. Warna teks dipilih dari apa yang benar-benar terlihat di belakangnya. */
   function colors() {
     const S = P.S;
-    let theme = S.barTheme || 'system';
-    if (theme === 'blur' && env.blur === false) theme = 'system'; // blur gagal dibuat, pakai warna tema
+    let effect = S.barEffect || 'solid';
+    if (effect === 'blur' && env.blur === false) effect = 'solid'; // blur gagal dibuat
     const base = env.dark ? BLACK : WHITE;
-    const tone = (c) => (S.barTone === 'theme' ? mix(c, base, 0.55) : c);
-    let bg = base, clear = false, ref = base;
-    if (theme === 'wallpaper' && env.desktop && env.wall) { bg = tone(env.wall); ref = bg; }
-    else if (theme === 'transparent') { bg = null; clear = true; ref = env.desktop && env.wall ? env.wall : base; }
-    else if (theme === 'blur') { bg = null; clear = true; ref = base; }
+    const src = S.barColor !== 'system' && env.color ? env.color : base;
+    let bg = src, ref = src, clear = false;
+    if (effect === 'blur') {
+      const a = (16 + (Math.max(0, Math.min(100, Number(S.barBlurTint ?? 40))) / 100) * 219) / 255;
+      bg = null; clear = true; ref = mix(env.wall || base, src, a);
+    } else if (effect === 'transparent') {
+      bg = null; clear = true; ref = env.wall || base;
+    }
     const light = lum(ref) > 0.3;
     return { bg, clear, fg: light ? [22, 22, 26] : [255, 255, 255], light };
   }
+  let lastColors = '';
   function applyColors() {
     if (!P.S) return;
     const c = colors();
     const root = document.documentElement.style;
+    const key = JSON.stringify(c) + P.S.notch;
+    if (key === lastColors) return;
+    lastColors = key;
     root.setProperty('--bar-bg', c.bg ? css(c.bg) : 'transparent');
     root.setProperty('--bar-fg', css(c.fg));
     root.setProperty('--bar-shadow', !c.clear ? 'none' : c.light ? '0 1px 2px rgba(255,255,255,.4)' : '0 1px 3px rgba(0,0,0,.6)');
@@ -77,23 +83,27 @@ P.mods.menubar = (() => {
 
   /* ---------- isi ---------- */
   const HARI_PANJANG = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+  const htmlCache = {};
+  function setHtml(sel, h) { if (htmlCache[sel] !== h) { htmlCache[sel] = h; $(sel).innerHTML = h; } }
   function paint() {
     if (!P.S) return;
     const mb = P.S.mb || {};
     const on = (k) => mb[k] !== false;
     $('#mbApp').textContent = on('app') ? (env.app || '') : '';
     $('#mbTitle').textContent = on('title') && env.title && env.title !== env.app ? env.title : '';
-    $('#mbWifi').innerHTML = on('wifi') ? wifiIcon() : '';
+    setHtml('#mbWifi', on('wifi') ? wifiIcon() : '');
     $('#mbWifi').title = net.ssid ? `${net.ssid} · sinyal ${net.signal}%` : (navigator.onLine ? 'Terhubung' : 'Tidak ada internet');
-    $('#mbVol').innerHTML = on('volume') ? volIcon() : '';
-    $('#mbBat').innerHTML = on('battery') ? batIcon() : '';
-    clockTick();
+    setHtml('#mbVol', on('volume') ? volIcon() : '');
+    setHtml('#mbBat', on('battery') ? batIcon() : '');
+    lastClock = null; clockTick();
   }
+  let lastClock = null;
   function clockTick() {
     if (!P.S) return;
     const mb = P.S.mb || {};
     const d = new Date();
-    $('#mbClock').textContent = mb.clock === false ? '' : `${HARI_PANJANG[d.getDay()]} ${d.getDate()} ${BLN[d.getMonth()]}  ${hhmm(d)}`;
+    const t = mb.clock === false ? '' : `${HARI_PANJANG[d.getDay()]} ${d.getDate()} ${BLN[d.getMonth()]}  ${hhmm(d)}`;
+    if (t !== lastClock) { lastClock = t; $('#mbClock').textContent = t; }
   }
 
   return {

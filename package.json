@@ -1,7 +1,7 @@
 {
   "name": "pulau",
   "productName": "Pulau",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Dynamic Island untuk Windows",
   "author": "LIP (Muhammad Alif Qadri)",
   "main": "main.js",
