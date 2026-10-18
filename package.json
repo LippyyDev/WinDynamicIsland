@@ -1,0 +1,54 @@
+{
+  "name": "pulau",
+  "productName": "Pulau",
+  "version": "0.2.0",
+  "description": "Dynamic Island untuk Windows",
+  "author": "LIP (Muhammad Alif Qadri)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64"
+  },
+  "build": {
+    "appId": "id.lip.pulau",
+    "productName": "Pulau",
+    "files": [
+      "main.js",
+      "preload.js",
+      "store.js",
+      "renderer/**",
+      "assets/**"
+    ],
+    "extraResources": [
+      {
+        "from": "media.ps1",
+        "to": "media.ps1"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png",
+      "signAndEditExecutable": true
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true,
+      "shortcutName": "Pulau"
+    },
+    "publish": null
+  },
+  "devDependencies": {
+    "@fontsource/plus-jakarta-sans": "^5.3.0",
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LippyyDev/WinDynamicIsland.git"
+  },
+  "homepage": "https://github.com/LippyyDev/WinDynamicIsland",
+  "license": "MIT"
+}

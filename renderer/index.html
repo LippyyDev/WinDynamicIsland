@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; font-src 'self'; connect-src https://lrclib.net; style-src 'self' 'unsafe-inline'">
+<title>Pulau</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="island.css">
+</head>
+<body>
+<div id="island" data-mode="idle">
+<div class="body">
+
+  <!-- IDLE: jam atau mata -->
+  <div class="view v-idle">
+    <div class="idle-clock"><span class="live-dot"></span><span id="clock">00:00</span></div>
+    <div class="eyes"><i class="eye"><b></b></i><i class="eye"><b></b></i></div>
+  </div>
+
+  <!-- COMPACT -->
+  <div class="view v-compact">
+    <div class="c-left" id="cLeft"></div>
+    <div class="marquee"><span id="cLine"></span></div>
+    <div class="c-right" id="cRight"></div>
+  </div>
+
+  <!-- ALERT -->
+  <div class="view v-alert">
+    <div class="al-icon" id="alIcon"></div>
+    <div class="al-txt"><b id="alTitle"></b><span id="alSub"></span></div>
+    <div class="al-right" id="alRight"></div>
+  </div>
+
+  <!-- EXPANDED -->
+  <div class="view v-expanded">
+    <header class="hd">
+      <div class="hd-title" id="hdTitle"></div>
+      <div class="hd-center">
+        <span class="bat" id="bat" title="Baterai">
+          <svg viewBox="0 0 20 20"><circle class="bt" cx="10" cy="10" r="7.5"/><circle class="bv" id="batVal" cx="10" cy="10" r="7.5"/></svg>
+        </span>
+        <span id="hdDate"></span><b id="hdClock"></b>
+      </div>
+      <div class="hd-right">
+        <button class="hd-eq" id="hdEq" title="Musik"><span class="bars"><i></i><i></i><i></i><i></i></span></button>
+        <button class="ic sm" id="bSettings" title="Pengaturan">
+          <svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <button class="nav prev" id="navPrev"><svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></button>
+    <button class="nav next" id="navNext"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button>
+
+    <div class="pages">
+      <!-- MUSIK -->
+      <section class="page" data-page="music">
+        <div class="m-left">
+          <div class="m-meta">
+            <img class="art lg" id="mArt" alt="">
+            <div class="m-txt">
+              <div class="m-title" id="mTitle">Tidak ada yang diputar</div>
+              <div class="m-artist" id="mArtist">Putar musik di Spotify, YouTube, atau pemutar lain</div>
+            </div>
+          </div>
+          <div class="prog">
+            <span id="tCur">00:00</span>
+            <div class="track" id="track"><div class="pfill" id="fill"></div><div class="knob" id="knob"></div></div>
+            <span id="tRem">-00:00</span>
+          </div>
+          <div class="ctrl">
+            <button class="ic" id="bLyr" title="Lirik"><svg viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg></button>
+            <span class="ctrl-main">
+              <button class="ic" id="bPrev" title="Sebelumnya"><svg class="fill" viewBox="0 0 24 24"><path d="M11 6.5v11L3.5 12zM20.5 6.5v11L13 12z"/></svg></button>
+              <button class="ic big" id="bPlay" title="Putar/Jeda">
+                <svg class="fill i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>
+                <svg class="fill i-play" viewBox="0 0 24 24"><path d="M7.5 5.2v13.6a.8.8 0 0 0 1.2.7l10.6-6.8a.8.8 0 0 0 0-1.4L8.7 4.5a.8.8 0 0 0-1.2.7Z"/></svg>
+              </button>
+              <button class="ic" id="bNext" title="Berikutnya"><svg class="fill" viewBox="0 0 24 24"><path d="M13 6.5v11l7.5-5.5zM3.5 6.5v11L11 12z"/></svg></button>
+            </span>
+            <span class="m-app" id="mApp"></span>
+          </div>
+        </div>
+        <div class="m-lyrics"><div class="lyr-inner" id="lyrInner"></div></div>
+      </section>
+
+      <!-- POMODORO -->
+      <section class="page" data-page="pomodoro">
+        <div class="pomo-ring">
+          <svg viewBox="0 0 100 100"><circle class="rt" cx="50" cy="50" r="42"/><circle class="rv" id="pRing" cx="50" cy="50" r="42"/></svg>
+          <div class="pomo-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.2 1.6M9.5 2.5h5M12 2.5v3"/></svg></div>
+        </div>
+        <div class="pomo-main">
+          <div class="pomo-time"><span id="pTime">25:00</span>
+            <button class="ic sm ghost" id="pReset" title="Ulangi"><svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4v4.5H8"/></svg></button>
+            <button class="ic sm ghost" id="pSkip" title="Lewati"><svg viewBox="0 0 24 24"><path d="m6 6 7 6-7 6zM17 6v12"/></svg></button>
+          </div>
+          <div class="pomo-label" id="pLabel">Waktu fokus</div>
+          <div class="pomo-btns">
+            <button class="chip" data-phase="short"><svg viewBox="0 0 24 24"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM17 10h1.5a2.5 2.5 0 0 1 0 5H17M8 3v3M12 3v3"/></svg>Istirahat</button>
+            <button class="pill-play" id="pPlay">
+              <svg class="fill i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg>
+              <svg class="fill i-pause" viewBox="0 0 24 24"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>
+            </button>
+            <button class="chip" data-phase="focus"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" class="fill"/></svg>Fokus</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- MINUM AIR -->
+      <section class="page" data-page="water">
+        <div class="w-left">
+          <div class="w-amt"><b id="wNow">0</b><span id="wGoal">/ 2 L</span>
+            <button class="switch" id="wRemind" title="Pengingat minum"><i></i></button>
+          </div>
+          <div class="w-sub" id="wSub">Hari ini · 0%</div>
+          <div class="w-bar"><i id="wFill"></i></div>
+          <div class="w-btns">
+            <button class="chip blue" id="wDrink"><svg viewBox="0 0 24 24"><path d="M12 3.5s6 6.4 6 10.5a6 6 0 0 1-12 0c0-4.1 6-10.5 6-10.5Z"/></svg><span id="wDrinkTxt">Minum</span></button>
+            <button class="chip" id="wUndo" title="Batalkan minum terakhir"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Batal</button>
+          </div>
+        </div>
+        <div class="w-chart" id="wChart"></div>
+      </section>
+
+      <!-- RAK FILE -->
+      <section class="page" data-page="shelf">
+        <div class="drop" id="drop">
+          <svg viewBox="0 0 24 24"><path d="M12 3v11M7.5 9.5 12 14l4.5-4.5"/><path d="M3.5 14.5v3a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-3"/></svg>
+          <b>Seret file ke sini</b>
+          <span>Seret keluar kapan saja · klik untuk membuka</span>
+        </div>
+        <div class="files scroll-x" id="files"></div>
+        <div class="sh-actions" id="shActions">
+          <button class="chip" id="shAdd"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Tambah</button>
+          <button class="chip" id="shClear"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5"/></svg>Kosongkan</button>
+        </div>
+      </section>
+
+      <!-- TUGAS -->
+      <section class="page" data-page="todo">
+        <div class="t-left">
+          <div class="t-count"><b id="tDone">0</b><span>/<i id="tTotal">0</i></span></div>
+          <div class="t-sub" id="tSub">Tugas selesai hari ini</div>
+          <div class="t-btns">
+            <button class="chip" id="tAdd"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Tambah</button>
+            <button class="chip" id="tClear"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Bersihkan</button>
+          </div>
+        </div>
+        <div class="t-right">
+          <form class="t-form" id="tForm" autocomplete="off">
+            <input id="tText" placeholder="Tulis tugas lalu Enter" maxlength="120">
+            <input id="tDue" type="time" title="Pengingat (opsional)">
+          </form>
+          <div class="t-list scroll-y" id="tList"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="dots" id="dots"></div>
+  </div>
+</div>
+</div>
+
+<script src="js/core.js"></script>
+<script src="js/music.js"></script>
+<script src="js/pomodoro.js"></script>
+<script src="js/water.js"></script>
+<script src="js/shelf.js"></script>
+<script src="js/todo.js"></script>
+<script src="js/system.js"></script>
+<script src="js/boot.js"></script>
+</body>
+</html>

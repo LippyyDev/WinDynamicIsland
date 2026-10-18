@@ -1,0 +1,101 @@
+# Pulau (WinDynamicIsland)
+
+*Dynamic Island* untuk Windows 10 dan 11. Sebuah kapsul hitam di tengah atas layar yang menampilkan pemutar musik dengan lirik tersinkron, timer Pomodoro, pengingat minum, rak file, daftar tugas, dan notifikasi sistem. Semua data tersimpan di PC sendiri, tanpa akun dan tanpa server.
+
+> Status: versi 0.2.0 (awal). Dibuat dengan Electron. Bagian yang membaca musik dan sistem dari Windows belum diuji pada banyak perangkat, jadi laporan *bug* sangat membantu.
+
+## Fitur
+
+| Fitur | Keterangan |
+| --- | --- |
+| Musik | Membaca lagu dari Spotify, YouTube di *browser*, dan pemutar lain lewat kontrol media Windows (SMTC). Sampul album, *progress bar* yang bisa diklik, putar, jeda, maju, mundur. |
+| Lirik | Lirik tersinkron dari [LRCLIB](https://lrclib.net). Klik satu baris untuk lompat ke bagian itu. Baris yang sedang dinyanyikan juga tampil di kapsul kecil. |
+| Warna dinamis | Latar pemutar bergradasi mengikuti warna sampul album. |
+| Pomodoro | Fokus, istirahat pendek, istirahat panjang. Durasi, jumlah sesi, bunyi, dan lanjut otomatis bisa diatur. Sisa waktu tampil di kapsul kecil. |
+| Minum Air | Catatan per jam, target harian, grafik, dan pengingat berkala pada jam aktif. |
+| Rak File | Seret file ke pulau, seret keluar ke aplikasi lain. Hanya menyimpan lokasi file. |
+| Daftar Tugas | Tugas harian dengan pengingat jam. Klik dua kali untuk mengubah teks. |
+| Notifikasi sistem | Pengisi daya, baterai lemah, *headphone* atau *speaker* terhubung, Caps Lock, volume. |
+| Mata saat diam | Setelah beberapa saat tanpa aktivitas, jam berganti sepasang mata yang mengikuti kursor. |
+| Pengaturan | Jendela khusus untuk semua opsi, termasuk menyalakan atau mematikan tiap halaman. |
+
+Dokumen kebutuhan produk ada di [docs/PRD.md](docs/PRD.md), rancangan teknis di [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Tampilan
+
+Gambar di bawah dibuat dengan data contoh.
+
+![Musik dan lirik](docs/screenshots/musik.png)
+![Pomodoro](docs/screenshots/pomodoro.png)
+![Minum Air](docs/screenshots/minum.png)
+![Rak File](docs/screenshots/rak-file.png)
+![Daftar Tugas](docs/screenshots/tugas.png)
+![Notifikasi](docs/screenshots/notifikasi.png)
+![Pengaturan](docs/screenshots/pengaturan.png)
+
+## Instalasi
+
+1. Buka halaman [Releases](../../releases) atau tab **Actions**, lalu unduh `Pulau Setup x.y.z.exe`.
+2. Jalankan *installer*. Jika muncul peringatan Windows SmartScreen, klik **More info** lalu **Run anyway**. Peringatan ini muncul karena *installer* belum ditandatangani secara digital.
+3. Pulau berjalan otomatis dan muncul di tengah atas layar. Pengaturan ada di ikon *system tray*.
+
+Persyaratan: Windows 10 atau 11 (64 bit). Lirik membutuhkan internet. Fitur lain bekerja sepenuhnya luring.
+
+## Cara pakai
+
+* Arahkan kursor ke kapsul untuk membukanya. Geser halaman dengan panah kiri kanan, titik di bawah, atau *scroll*.
+* Klik ikon gerigi di pojok kanan atas, atau klik ikon *tray*, untuk membuka Pengaturan.
+* Klik kanan ikon *tray* untuk menampilkan atau menyembunyikan pulau, mengatur *autostart*, membuka log, atau keluar.
+
+## Pengembangan
+
+Prasyarat: Node.js 20 atau lebih baru, dan Windows untuk menjalankan fitur musik serta notifikasi sistem.
+
+```bash
+npm install
+npm start          # jalankan dalam mode pengembangan
+npm run dist       # bangun installer di folder dist/
+```
+
+Di Linux atau macOS, antarmuka tetap bisa dibuka untuk pengerjaan tampilan, tetapi data musik dan sistem tidak tersedia karena memakai PowerShell dan API Windows.
+
+*Installer* juga dibangun otomatis oleh GitHub Actions (`.github/workflows/build.yml`) pada setiap *push*. Untuk membuat rilis, beri *tag* `v0.2.0` dan hasilnya terlampir di halaman Releases.
+
+## Struktur proyek
+
+```
+main.js          proses utama Electron: jendela, tray, IPC, jembatan PowerShell
+preload.js       API aman yang diekspos ke antarmuka
+store.js         penyimpanan lokal (satu file JSON)
+media.ps1        pembaca media, volume, dan Caps Lock Windows
+renderer/        antarmuka pulau dan jendela pengaturan
+  js/            modul per fitur (music, pomodoro, water, shelf, todo, system)
+docs/            PRD, arsitektur, roadmap
+```
+
+## Data dan privasi
+
+* Pengaturan, tugas, catatan minum, dan isi rak file disimpan di `%APPDATA%\Pulau\pulau-data.json`.
+* Tidak ada akun, analitik, atau pelacakan.
+* Satu-satunya permintaan jaringan adalah pencarian lirik ke LRCLIB, yang mengirim judul, nama artis, nama album, dan durasi lagu.
+
+## Pemecahan masalah
+
+* **Kapsul hanya menampilkan jam padahal musik diputar:** klik kanan ikon *tray*, pilih **Buka log media**, lalu lampirkan isinya pada *issue*.
+* **Pengingat atau notifikasi tidak muncul:** periksa pengaturan **Notifikasi**.
+* **Peringatan SmartScreen:** lihat bagian Instalasi.
+
+## Batasan yang diketahui
+
+* Timer pada aplikasi Clock bawaan Windows tidak bisa dibaca aplikasi lain. Gunakan Pomodoro di Pulau.
+* Persentase baterai *headphone* tidak tersedia, hanya status terhubung atau terputus.
+* Kecerahan layar dan Wi-Fi belum didukung. Lihat [docs/ROADMAP.md](docs/ROADMAP.md).
+* Pulau hanya tampil di monitor utama dan tidak bisa digeser.
+
+## Kontribusi
+
+Lihat [CONTRIBUTING.md](CONTRIBUTING.md). Riwayat perubahan ada di [CHANGELOG.md](CHANGELOG.md).
+
+## Lisensi
+
+[MIT](LICENSE). Font Plus Jakarta Sans berlisensi SIL Open Font License. Proyek ini tidak berafiliasi dengan Apple maupun pembuat aplikasi sejenis.

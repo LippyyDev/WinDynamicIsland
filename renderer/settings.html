@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'unsafe-inline'">
+<title>Pengaturan Pulau</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="settings.css">
+</head>
+<body>
+<div class="titlebar"><span>Pengaturan Pulau</span></div>
+<aside class="side">
+  <div class="brand">
+    <div class="logo"><i></i></div>
+    <div><b>Pulau</b><span id="ver">versi</span></div>
+  </div>
+  <nav id="nav">
+    <a data-s="umum" class="on"><svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M8 4v16"/></svg>Umum</a>
+    <a data-s="musik"><svg viewBox="0 0 24 24"><path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>Musik</a>
+    <a data-s="pomodoro"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.2 1.6M9.5 2.5h5"/></svg>Pomodoro</a>
+    <a data-s="minum"><svg viewBox="0 0 24 24"><path d="M12 3.5s6 6.4 6 10.5a6 6 0 0 1-12 0c0-4.1 6-10.5 6-10.5Z"/></svg>Minum Air</a>
+    <a data-s="notif"><svg viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg>Notifikasi</a>
+    <a data-s="data"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="2.8"/><path d="M4.5 6v12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8"/></svg>Data</a>
+  </nav>
+  <div class="side-foot">Semua data tersimpan di PC ini.</div>
+</aside>
+
+<main id="main">
+  <!-- UMUM -->
+  <section data-s="umum" class="on">
+    <h1>Umum</h1>
+    <p class="lead">Atur perilaku pulau di bagian atas layar.</p>
+    <div class="card">
+      <label class="row"><div><b>Jalankan saat Windows mulai</b><span>Pulau langsung muncul setelah login.</span></div><input type="checkbox" class="sw" id="autostart"></label>
+      <label class="row"><div><b>Mata saat diam</b><span>Jam berganti jadi sepasang mata yang mengikuti kursor.</span></div><input type="checkbox" class="sw" data-k="eyes"></label>
+      <label class="row"><div><b>Muncul mata setelah</b><span>Lama tidak ada aktivitas, dalam detik.</span></div><span class="num"><input type="number" data-k="eyesAfter" min="5" max="600" step="5"><em>detik</em></span></label>
+      <label class="row"><div><b>Jeda sebelum terbuka</b><span>Waktu tunggu saat kursor diarahkan ke pulau.</span></div><span class="num"><input type="number" data-k="hoverDelay" min="0" max="1500" step="20"><em>ms</em></span></label>
+    </div>
+    <h2>Halaman</h2>
+    <div class="card">
+      <label class="row"><div><b>Musik</b><span>Kontrol pemutar dan lirik.</span></div><input type="checkbox" class="sw" data-k="pages.music"></label>
+      <label class="row"><div><b>Pomodoro</b><span>Timer fokus dan istirahat.</span></div><input type="checkbox" class="sw" data-k="pages.pomodoro"></label>
+      <label class="row"><div><b>Minum Air</b><span>Catatan dan pengingat minum.</span></div><input type="checkbox" class="sw" data-k="pages.water"></label>
+      <label class="row"><div><b>Rak File</b><span>Tempat singgah file untuk diseret ke aplikasi lain.</span></div><input type="checkbox" class="sw" data-k="pages.shelf"></label>
+      <label class="row"><div><b>Daftar Tugas</b><span>Tugas harian dengan pengingat.</span></div><input type="checkbox" class="sw" data-k="pages.todo"></label>
+    </div>
+  </section>
+
+  <!-- MUSIK -->
+  <section data-s="musik">
+    <h1>Musik</h1>
+    <p class="lead">Membaca lagu dari Spotify, YouTube di browser, dan pemutar lain lewat kontrol media Windows.</p>
+    <div class="card">
+      <label class="row"><div><b>Tampilkan lirik</b><span>Lirik tersinkron dari LRCLIB. Butuh internet.</span></div><input type="checkbox" class="sw" data-k="lyrics"></label>
+      <label class="row"><div><b>Lirik di pulau kecil</b><span>Baris lirik tampil saat pulau tertutup.</span></div><input type="checkbox" class="sw" data-k="lyricsCompact"></label>
+      <label class="row"><div><b>Warna mengikuti sampul album</b><span>Latar pemutar diberi gradasi dari warna sampul.</span></div><input type="checkbox" class="sw" data-k="artColor"></label>
+    </div>
+  </section>
+
+  <!-- POMODORO -->
+  <section data-s="pomodoro">
+    <h1>Pomodoro</h1>
+    <p class="lead">Durasi dalam menit.</p>
+    <div class="card">
+      <label class="row"><div><b>Fokus</b></div><span class="num"><input type="number" data-k="pomo.focus" min="1" max="180"><em>menit</em></span></label>
+      <label class="row"><div><b>Istirahat pendek</b></div><span class="num"><input type="number" data-k="pomo.short" min="1" max="60"><em>menit</em></span></label>
+      <label class="row"><div><b>Istirahat panjang</b></div><span class="num"><input type="number" data-k="pomo.long" min="1" max="120"><em>menit</em></span></label>
+      <label class="row"><div><b>Istirahat panjang setiap</b><span>Jumlah sesi fokus sebelum istirahat panjang.</span></div><span class="num"><input type="number" data-k="pomo.every" min="2" max="12"><em>sesi</em></span></label>
+      <label class="row"><div><b>Bunyi saat selesai</b></div><input type="checkbox" class="sw" data-k="pomo.sound"></label>
+      <label class="row"><div><b>Lanjut otomatis</b><span>Sesi berikutnya langsung berjalan.</span></div><input type="checkbox" class="sw" data-k="pomo.autoNext"></label>
+    </div>
+  </section>
+
+  <!-- MINUM -->
+  <section data-s="minum">
+    <h1>Minum Air</h1>
+    <p class="lead">Pulau akan mengingatkan kalau kamu lama tidak minum.</p>
+    <div class="card">
+      <label class="row"><div><b>Pengingat aktif</b></div><input type="checkbox" class="sw" data-k="water.remind"></label>
+      <label class="row"><div><b>Target harian</b></div><span class="num"><input type="number" data-k="water.goal" min="250" max="6000" step="250"><em>ml</em></span></label>
+      <label class="row"><div><b>Ukuran gelas atau botol</b><span>Jumlah yang ditambahkan setiap kali menekan Minum.</span></div><span class="num"><input type="number" data-k="water.cup" min="50" max="2000" step="50"><em>ml</em></span></label>
+      <label class="row"><div><b>Ingatkan setiap</b></div><span class="num"><input type="number" data-k="water.interval" min="10" max="480" step="5"><em>menit</em></span></label>
+      <label class="row"><div><b>Jam aktif</b><span>Pengingat hanya muncul di rentang jam ini.</span></div>
+        <span class="num"><input type="number" data-k="water.start" min="0" max="23"><em>sampai</em><input type="number" data-k="water.end" min="1" max="24"></span></label>
+    </div>
+  </section>
+
+  <!-- NOTIFIKASI -->
+  <section data-s="notif">
+    <h1>Notifikasi</h1>
+    <p class="lead">Pemberitahuan singkat yang muncul di pulau.</p>
+    <div class="card">
+      <label class="row"><div><b>Pengisian daya</b><span>Saat charger dipasang atau dilepas.</span></div><input type="checkbox" class="sw" data-k="notify.charging"></label>
+      <label class="row"><div><b>Baterai lemah</b></div><input type="checkbox" class="sw" data-k="notify.lowBattery"></label>
+      <label class="row"><div><b>Batas baterai lemah</b></div><span class="num"><input type="number" data-k="notify.lowAt" min="5" max="50" step="5"><em>%</em></span></label>
+      <label class="row"><div><b>Headphone dan speaker</b><span>Saat perangkat audio terhubung atau terputus.</span></div><input type="checkbox" class="sw" data-k="notify.headphones"></label>
+      <label class="row"><div><b>Caps Lock</b></div><input type="checkbox" class="sw" data-k="notify.caps"></label>
+      <label class="row"><div><b>Volume</b><span>Saat volume diubah atau dibisukan.</span></div><input type="checkbox" class="sw" data-k="notify.volume"></label>
+      <label class="row"><div><b>Pengingat tugas</b><span>Saat jam pengingat tugas tiba.</span></div><input type="checkbox" class="sw" data-k="notify.todo"></label>
+    </div>
+  </section>
+
+  <!-- DATA -->
+  <section data-s="data">
+    <h1>Data</h1>
+    <p class="lead">Pulau tidak memakai akun atau server. Pengaturan, tugas, catatan minum, dan isi rak file disimpan sebagai satu file di folder aplikasi pada PC ini. Rak file hanya menyimpan lokasi file, bukan salinannya.</p>
+    <div class="card">
+      <div class="row"><div><b>Folder data</b><span>Berisi pulau-data.json dan media.log.</span></div><button class="btn" id="openData">Buka folder</button></div>
+      <div class="row"><div><b>Hapus semua data</b><span>Mengembalikan pengaturan awal dan menghapus tugas, catatan minum, serta rak file.</span></div><button class="btn danger" id="resetData">Hapus</button></div>
+    </div>
+    <h2>Tentang</h2>
+    <div class="card">
+      <div class="row"><div><b>Lirik</b><span>Disediakan oleh LRCLIB (lrclib.net). Judul, artis, dan durasi lagu dikirim ke sana untuk mencari lirik.</span></div></div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast">Tersimpan</div>
+<script src="js/settings.js"></script>
+</body>
+</html>

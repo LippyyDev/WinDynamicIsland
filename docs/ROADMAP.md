@@ -1,0 +1,28 @@
+# Roadmap
+
+Urutan menunjukkan prioritas, bukan janji tanggal.
+
+## Segera (0.3)
+
+- [ ] Verifikasi pembacaan musik, sampul, volume, dan Caps Lock di berbagai perangkat Windows
+- [ ] Notifikasi untuk unduhan selesai
+- [ ] Posisi kapsul dapat diatur (offset vertikal dan pilihan monitor)
+- [ ] Pintasan papan ketik untuk membuka pulau
+- [ ] Bahasa Inggris sebagai pilihan antarmuka
+
+## Berikutnya
+
+- [ ] Kecerahan layar dan Wi-Fi sebagai notifikasi sistem
+- [ ] Persentase baterai *headphone* Bluetooth bila API tersedia
+- [ ] Pengganti PowerShell dengan modul native agar lebih cepat dan ringan
+- [ ] Tanda tangan digital pada *installer*
+- [ ] Pembaruan otomatis
+- [ ] Beberapa timer dan statistik Pomodoro
+- [ ] Ekspor dan impor data
+
+## Ide
+
+- [ ] Kalender dan agenda berikutnya
+- [ ] Tema dan warna aksen yang dapat dipilih
+- [ ] Integrasi catatan cepat (*clipboard history*)
+- [ ] Sistem *plugin* untuk halaman buatan komunitas

@@ -1,0 +1,22 @@
+@font-face { font-family: "Jakarta"; src: url(fonts/pjs-400.woff2) format("woff2"); font-weight: 400; }
+@font-face { font-family: "Jakarta"; src: url(fonts/pjs-500.woff2) format("woff2"); font-weight: 500; }
+@font-face { font-family: "Jakarta"; src: url(fonts/pjs-600.woff2) format("woff2"); font-weight: 600; }
+@font-face { font-family: "Jakarta"; src: url(fonts/pjs-700.woff2) format("woff2"); font-weight: 700; }
+@font-face { font-family: "Jakarta"; src: url(fonts/pjs-800.woff2) format("woff2"); font-weight: 800; }
+
+:root {
+  --font: "Jakarta", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --txt: #f4f4f6;
+  --txt2: #a3a3ad;
+  --txt3: #6c6c76;
+  --line: rgba(255, 255, 255, .09);
+  --chip: rgba(255, 255, 255, .08);
+  --chip-h: rgba(255, 255, 255, .14);
+  --green: #3ddc84;
+  --red: #ff5468;
+  --blue: #4da3ff;
+  --amber: #ffb547;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+button, input { font: inherit; color: inherit; }
+svg { display: block; }
