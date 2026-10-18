@@ -99,37 +99,41 @@ function foreground() {
   } catch (_) { return null; }
 }
 
-// Warna dominan pada satu baris piksel di bagian atas jendela (title bar, tab, atau ribbon).
-// bar: { left, right, bottom } bilah dalam piksel fisik. Mengembalikan [r, g, b] atau null.
+// Warna bagian atas jendela pada satu baris piksel (title bar, tab, atau ribbon).
+// bar: { left, right, bottom } bilah dalam piksel fisik. Mengembalikan { color: [r,g,b] | null, why, ms, rect }.
 const RB = Buffer.alloc(16);
 const BMI = Buffer.alloc(44);
 function windowTopColor(hwnd, bar) {
-  const f = load(); if (!f) return null;
-  if (f.IsIconic(hwnd)) return null;
+  const t0 = Date.now();
+  const out = (color, why, extra) => ({ color, why, ms: Date.now() - t0, ...extra });
+  const f = load(); if (!f) return out(null, 'win32 tidak tersedia');
+  if (f.IsIconic(hwnd)) return out(null, 'jendela diminimalkan');
   let ok = f.DwmGetWindowAttribute && f.DwmGetWindowAttribute(hwnd, 9, RB, 16) === 0; // DWMWA_EXTENDED_FRAME_BOUNDS, tanpa bayangan
   if (!ok) ok = f.GetWindowRect(hwnd, RB);
-  if (!ok) return null;
+  if (!ok) return out(null, 'batas jendela tidak terbaca');
   const r = { left: RB.readInt32LE(0), top: RB.readInt32LE(4), right: RB.readInt32LE(8), bottom: RB.readInt32LE(12) };
   const y = Math.max(r.top, bar.bottom) + 4;
   const x0 = Math.max(r.left, bar.left) + 6, x1 = Math.min(r.right, bar.right) - 6;
   const w = Math.min(x1 - x0, 4096);
-  if (w < 24 || y >= r.bottom - 2) return null;
+  const rect = `jendela ${r.left},${r.top},${r.right},${r.bottom} baris y=${y} lebar=${w}`;
+  if (w < 24 || y >= r.bottom - 2) return out(null, 'area terlalu kecil', { rect });
 
   let sdc = 0, mdc = 0, bmp = 0, old = 0;
   try {
-    sdc = f.GetDC(0); if (!sdc) return null;
-    mdc = f.CreateCompatibleDC(sdc); if (!mdc) return null;
-    bmp = f.CreateCompatibleBitmap(sdc, w, 1); if (!bmp) return null;
+    sdc = f.GetDC(0); if (!sdc) return out(null, 'GetDC gagal', { rect });
+    mdc = f.CreateCompatibleDC(sdc); if (!mdc) return out(null, 'CreateCompatibleDC gagal', { rect });
+    bmp = f.CreateCompatibleBitmap(sdc, w, 1); if (!bmp) return out(null, 'CreateCompatibleBitmap gagal', { rect });
     old = f.SelectObject(mdc, bmp);
-    if (!f.BitBlt(mdc, 0, 0, w, 1, sdc, x0, y, 0x00CC0020)) return null; // SRCCOPY
+    if (!f.BitBlt(mdc, 0, 0, w, 1, sdc, x0, y, 0x00CC0020)) return out(null, 'BitBlt gagal', { rect }); // SRCCOPY
     f.SelectObject(mdc, old); old = 0; // bitmap harus dilepas dari DC sebelum GetDIBits
     BMI.fill(0);
     BMI.writeUInt32LE(40, 0); BMI.writeInt32LE(w, 4); BMI.writeInt32LE(-1, 8);
     BMI.writeUInt16LE(1, 12); BMI.writeUInt16LE(32, 14); // 32 bit, BI_RGB
     const px = Buffer.alloc(w * 4);
-    if (!f.GetDIBits(mdc, bmp, 0, 1, px, BMI, 0)) return null;
-    return dominant(px, w);
-  } catch (_) { return null; }
+    if (!f.GetDIBits(mdc, bmp, 0, 1, px, BMI, 0)) return out(null, 'GetDIBits gagal', { rect });
+    const c = dominant(px, w);
+    return out(c, c ? 'ok' : 'piksel kosong', { rect });
+  } catch (e) { return out(null, 'galat: ' + e.message, { rect }); }
   finally {
     try { if (old) f.SelectObject(mdc, old); } catch (_) {}
     try { if (bmp) f.DeleteObject(bmp); } catch (_) {}
@@ -137,21 +141,46 @@ function windowTopColor(hwnd, bar) {
     try { if (sdc) f.ReleaseDC(0, sdc); } catch (_) {}
   }
 }
-// Kelompokkan warna (4 bit per kanal), ambil kelompok terbanyak, lalu rata-rata di dalamnya.
-// Teks, ikon, dan tab aktif yang kecil tidak ikut menggeser hasil.
+// Kelompokkan warna (3 bit per kanal) dan ambil kelompok terbanyak beserta tetangganya, lalu rata-ratakan.
+// Latar bergradasi (Word, Office) terpecah ke banyak kelompok, jadi tetangga ikut dihitung.
+// Bila tidak ada pemenang yang jelas (foto, video), pakai median tiap kanal. Tidak pernah mengembalikan null untuk data valid.
 function dominant(px, w) {
-  const buckets = new Map();
+  if (!w) return null;
+  const grid = new Array(512).fill(null);
+  const R = new Uint8Array(w), G = new Uint8Array(w), B = new Uint8Array(w);
   for (let i = 0; i < w; i++) {
     const o = i * 4, b = px[o], g = px[o + 1], r = px[o + 2];
-    const k = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4);
-    let e = buckets.get(k);
-    if (!e) { e = [0, 0, 0, 0]; buckets.set(k, e); }
+    R[i] = r; G[i] = g; B[i] = b;
+    const k = ((r >> 5) << 6) | ((g >> 5) << 3) | (b >> 5);
+    const e = grid[k] || (grid[k] = [0, 0, 0, 0]);
     e[0] += r; e[1] += g; e[2] += b; e[3]++;
   }
-  let best = null;
-  for (const e of buckets.values()) if (!best || e[3] > best[3]) best = e;
-  if (!best || best[3] < w * 0.15) return null; // terlalu acak (foto, video): biarkan pemanggil memakai cadangan
-  return [Math.round(best[0] / best[3]), Math.round(best[1] / best[3]), Math.round(best[2] / best[3])];
+  let bestK = -1, bestScore = 0;
+  for (let k = 0; k < 512; k++) {
+    if (!grid[k]) continue;
+    const kr = k >> 6, kg = (k >> 3) & 7, kb = k & 7;
+    let score = 0;
+    for (let dr = -1; dr <= 1; dr++) for (let dg = -1; dg <= 1; dg++) for (let db = -1; db <= 1; db++) {
+      const rr = kr + dr, gg = kg + dg, bb = kb + db;
+      if (rr < 0 || rr > 7 || gg < 0 || gg > 7 || bb < 0 || bb > 7) continue;
+      const e = grid[(rr << 6) | (gg << 3) | bb];
+      if (e) score += e[3];
+    }
+    if (score > bestScore) { bestScore = score; bestK = k; }
+  }
+  if (bestK >= 0 && bestScore >= w * 0.4) {
+    const kr = bestK >> 6, kg = (bestK >> 3) & 7, kb = bestK & 7;
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let dr = -1; dr <= 1; dr++) for (let dg = -1; dg <= 1; dg++) for (let db = -1; db <= 1; db++) {
+      const rr = kr + dr, gg = kg + dg, bb = kb + db;
+      if (rr < 0 || rr > 7 || gg < 0 || gg > 7 || bb < 0 || bb > 7) continue;
+      const e = grid[(rr << 6) | (gg << 3) | bb];
+      if (e) { r += e[0]; g += e[1]; b += e[2]; n += e[3]; }
+    }
+    return [Math.round(r / n), Math.round(g / n), Math.round(b / n)];
+  }
+  const med = (a) => Array.from(a).sort((p, q) => p - q)[w >> 1];
+  return [med(R), med(G), med(B)];
 }
 
 // Warna rata-rata bagian atas wallpaper (tempat bilah berada)

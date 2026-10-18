@@ -2,7 +2,7 @@
 
 *Dynamic Island* untuk Windows 10 dan 11. Sebuah kapsul hitam di tengah atas layar yang menampilkan pemutar musik dengan lirik tersinkron, timer Pomodoro, pengingat minum, rak file, daftar tugas, dan notifikasi sistem. Semua data tersimpan di PC sendiri, tanpa akun dan tanpa server.
 
-> Status: versi 0.4.2. Dibuat dengan Electron. Bagian yang membaca musik dan sistem dari Windows belum diuji pada banyak perangkat, jadi laporan *bug* sangat membantu.
+> Status: versi 0.4.3. Dibuat dengan Electron. Bagian yang membaca musik dan sistem dari Windows belum diuji pada banyak perangkat, jadi laporan *bug* sangat membantu.
 
 ## Fitur
 
@@ -64,7 +64,7 @@ npm run dist       # bangun installer di folder dist/
 
 Di Linux atau macOS, antarmuka tetap bisa dibuka untuk pengerjaan tampilan, tetapi data musik dan sistem tidak tersedia karena memakai PowerShell dan API Windows.
 
-*Installer* juga dibangun otomatis oleh GitHub Actions (`.github/workflows/build.yml`) pada setiap *push*. Untuk membuat rilis, beri *tag* `v0.4.2` dan hasilnya terlampir di halaman Releases.
+*Installer* juga dibangun otomatis oleh GitHub Actions (`.github/workflows/build.yml`) pada setiap *push*. Untuk membuat rilis, beri *tag* `v0.4.3` dan hasilnya terlampir di halaman Releases.
 
 ## Struktur proyek
 
@@ -95,6 +95,7 @@ docs/            PRD, arsitektur, roadmap
 * **Jendela masih tertutup pulau:** pastikan **Potong layar seperti notch** aktif. Jendela yang sudah terbuka mungkin perlu dimaksimalkan ulang. Bila log berisi `AppBar tidak tersedia`, laporkan sebagai *issue*.
 * **Area atas tetap kosong setelah Pulau ditutup paksa:** Windows biasanya memulihkannya sendiri. Bila tidak, buka lalu tutup Pulau dari menu *tray*, atau mulai ulang Explorer.
 * **Sampul album tidak tampil:** buka log. Baris `thumbnail:` menjelaskan apakah pemutar tidak mengirim gambar atau gambar gagal dibaca. Pastikan juga **Cari sampul secara online** aktif di Pengaturan.
+* **Warna bilah tidak mengikuti jendela aktif:** di log Semua aktivitas, cari baris `[bilah] Warna <aplikasi>`. Isinya warna yang terbaca atau alasan gagal (misalnya `BitBlt gagal`), plus koordinat jendela dan baris yang dibaca. Kirim baris itu ke *issue*.
 * **Ingin memastikan tidak ada kebocoran memori:** dengan log Semua aktivitas, baris `[kinerja]` dicatat tiap 10 menit berisi total memori dan CPU semua proses Pulau. Angka yang terus naik selama berjam-jam menandakan kebocoran, dan Pulau sendiri mencatat peringatan bila memori naik lebih dari dua kali lipat.
 * **Pengingat atau notifikasi tidak muncul:** periksa pengaturan **Notifikasi**.
 * **Peringatan SmartScreen:** lihat bagian Instalasi.

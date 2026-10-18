@@ -391,9 +391,12 @@ function doSample() {
   sampleTimer = null;
   if (!lastFg || lastFg.desktop || !barPhys || userHidden || fullscreenHidden) return;
   if (inside) { scheduleSample(800); return; } // pulau terbuka menutupi bagian tengah, tunggu
-  const c = desktop.windowTopColor(lastFg.hwnd, barPhys);
+  const res = desktop.windowTopColor(lastFg.hwnd, barPhys);
   lastSample = Date.now();
-  winColor = c;
+  winColor = res.color;
+  if (sampleRuns === 0 || res.color === null) {
+    log.info('bilah', `Warna ${lastFg.app}: ${res.color ? res.color.join(',') : 'tidak terbaca'} (${res.why}, ${res.ms} ms) ${res.rect || ''} bilah bawah=${barPhys.bottom}`);
+  }
   if (++sampleRuns === 1) scheduleSample(900);
   pollEnv(true);
 }

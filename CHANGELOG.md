@@ -2,6 +2,12 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.4.3] 2026-10-18
+
+### Diperbaiki
+- Warna Otomatis gagal pada jendela dengan latar bergradasi seperti Word, sehingga bilah jatuh ke warna cadangan (putih). Pengelompokan warna kini mencakup kelompok bertetangga dan memakai median bila tidak ada pemenang jelas
+- Log `[bilah]` kini mencatat warna yang terbaca, alasan gagal, koordinat jendela, dan waktu baca
+
 ## [0.4.2] 2026-10-18
 
 ### Diubah

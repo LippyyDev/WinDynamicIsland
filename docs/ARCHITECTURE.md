@@ -60,7 +60,7 @@ Proses utama memeriksa lingkungan tiap 1 detik lalu mengirim pesan `env` hanya b
 | Data | Sumber |
 | --- | --- |
 | Aplikasi aktif dan judul | `GetForegroundWindow`, `GetWindowTextW`, `QueryFullProcessImageNameW`. Nama exe di-cache per PID (maksimal 64) dan *buffer* dipakai ulang. Kelas `Progman` atau `WorkerW` berarti desktop. *Taskbar*, Start, Alt+Tab, dan jendela Pulau sendiri diabaikan. |
-| Warna jendela aktif | Batas jendela dari `DwmGetWindowAttribute(DWMWA_EXTENDED_FRAME_BOUNDS)`, lalu satu `BitBlt` selebar jendela setinggi 1 piksel, 4 piksel di bawah bilah atau di bawah tepi atas jendela. Warna dikelompokkan 4 bit per kanal dan diambil kelompok terbanyak, sehingga teks dan ikon tidak menggeser hasil. Bila tidak ada kelompok yang mencapai 15 persen (foto, video), bilah memakai warna tema. |
+| Warna jendela aktif | Batas jendela dari `DwmGetWindowAttribute(DWMWA_EXTENDED_FRAME_BOUNDS)`, lalu satu `BitBlt` selebar jendela setinggi 1 piksel, 4 piksel di bawah bilah atau di bawah tepi atas jendela. Warna dikelompokkan 3 bit per kanal; kelompok terbanyak beserta 26 tetangganya dirata-ratakan, jadi latar bergradasi (Word, Office) tetap terbaca dan teks atau ikon tidak menggeser hasil. Bila tidak ada pemenang yang jelas (foto, video), dipakai median tiap kanal. Alasan setiap kegagalan dicatat di log. |
 | Warna wallpaper | `SystemParametersInfoW(SPI_GETDESKWALLPAPER)`, cadangan `TranscodedWallpaper`. Rata-rata 10 persen bagian atas gambar, dihitung ulang hanya bila file berubah. |
 | Tema gelap atau terang | `nativeTheme.shouldUseDarkColors` |
 | Wi-Fi | `netsh wlan show interfaces` tiap 10 detik di PowerShell |
