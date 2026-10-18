@@ -26,9 +26,14 @@
 <div id="island" data-mode="idle">
 <div class="body">
 
-  <!-- IDLE: jam atau mata -->
+  <!-- IDLE: gaya dipilih lewat data-idle -->
   <div class="view v-idle">
     <div class="idle-clock"><span class="live-dot"></span><span id="clock">00:00</span></div>
+    <div class="idle-date" id="idleDate"></div>
+    <div class="idle-text" id="idleText"></div>
+    <div class="idle-bat"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" class="trk"/><circle cx="10" cy="10" r="7.5" class="val" id="idleBatVal"/></svg><span id="idleBatPct"></span></div>
+    <div class="idle-breath"><i></i></div>
+    <div class="idle-wave"><svg viewBox="0 0 112 14" width="112" height="14"><path d="M0 7Q7 0 14 7T28 7T42 7T56 7T70 7T84 7T98 7T112 7"/></svg></div>
     <div class="cam"></div>
     <div class="eyes"><i class="eye"><b></b></i><i class="eye"><b></b></i></div>
   </div>

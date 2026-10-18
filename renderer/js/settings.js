@@ -36,6 +36,8 @@ function bind() {
       el.addEventListener('change', () => { setP(S, k, el.checked); api.set('settings', S); toast(); });
     } else if (el.tagName === 'SELECT') {
       el.addEventListener('change', () => { setP(S, k, el.value); api.set('settings', S); fill(); toast(); setTimeout(refreshLog, 300); });
+    } else if (el.type === 'text') {
+      el.addEventListener('change', () => { const v = el.value.trim().slice(0, Number(el.maxLength) > 0 ? el.maxLength : 64); el.value = v; setP(S, k, v); api.set('settings', S); toast(); });
     } else {
       el.addEventListener('change', () => {
         let v = Number(el.value);

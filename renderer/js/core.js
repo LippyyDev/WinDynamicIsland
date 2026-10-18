@@ -13,7 +13,7 @@ const P = {
   page: 'music',
   hover: false, hoverRaw: false,
   alert: null, alertQ: [], alertT: 0,
-  eyes: false, lastActive: Date.now(),
+  alt: false, curOn: false, lastActive: Date.now(),
   compactW: 340
 };
 
@@ -159,11 +159,14 @@ function render() {
   else if (P.alert) mode = 'alert';
   else if (buildCompact()) mode = 'compact';
   else mode = 'idle';
-  if (mode !== 'idle') P.eyes = false;
+  if (mode !== 'idle') P.alt = false;
+  const idle = mode === 'idle' ? idleStyle() : '';
 
   island.dataset.mode = mode;
   island.dataset.page = P.page;
-  island.dataset.eyes = mode === 'idle' && P.eyes ? '1' : '0';
+  island.dataset.idle = idle;
+  idleApply();
+  if ((idle === 'eyes') !== P.curOn) { P.curOn = idle === 'eyes'; api.wantCursor(P.curOn); }
   island.classList.toggle('al-small', mode === 'alert' && (P.alert.h || 64) < 56);
 
   const notch = !!P.S.notch;
@@ -175,7 +178,8 @@ function render() {
   if (mode === 'expanded') { w = P.mods[P.page].width(); h = 190; }
   else if (mode === 'alert') { w = P.alert.w || 380; h = Math.max(P.alert.h || 64, notch ? barH : 0); }
   else if (mode === 'compact') { w = P.compactW; h = notch ? barH : 38; }
-  else if (P.eyes) { w = 124; }
+  else if (idle === 'eyes') { w = 124; }
+  else if (idle === 'text') { w = Math.max(150, Math.min(280, 44 + (String(P.S.idleText || '').length) * 8)); }
   island.style.width = w + 'px';
   island.style.height = h + 'px';
 
@@ -275,19 +279,53 @@ function clock() {
   if (t === clock.last) return; // DOM hanya disentuh saat menit berganti
   clock.last = t;
   $('#clock').textContent = t;
+  $('#idleDate').textContent = `${HARI[d.getDay()]}, ${d.getDate()} ${BLN[d.getMonth()]}`;
   $('#hdClock').textContent = t;
   $('#hdDate').textContent = `${HARI[d.getDay()]}, ${d.getDate()} ${BLN[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-/* ---------- mata saat idle ---------- */
-function eyesTick() {
+/* ---------- tampilan idle (bisa dikustom) ---------- */
+const IDLE_STYLES = ['clock', 'date', 'text', 'battery', 'breath', 'wave', 'cam', 'eyes', 'none'];
+const idleBat = { level: -1, charging: false };
+// gaya yang berlaku sekarang: gaya dasar, atau gaya "setelah lama diam" bila P.alt aktif
+function idleStyle() {
+  let s = P.alt ? P.S.idleAlt : P.S.idleStyle;
+  if (!s || s === 'auto' || s === 'same' || !IDLE_STYLES.includes(s)) s = P.S.notch && P.S.menubar !== false ? 'cam' : 'clock';
+  if (s === 'battery' && idleBat.level < 0) s = P.S.notch && P.S.menubar !== false ? 'cam' : 'clock'; // PC tanpa baterai
+  return s;
+}
+let idleSig = '';
+function idleApply() { // tulis DOM hanya bila isinya berubah
+  const sig = (P.S.idleText || '') + '|' + idleBat.level + idleBat.charging;
+  if (sig === idleSig) return;
+  idleSig = sig;
+  $('#idleText').textContent = String(P.S.idleText || '').slice(0, 16);
+  if (idleBat.level >= 0) {
+    const pct = Math.round(idleBat.level * 100);
+    $('#idleBatPct').textContent = pct + '%';
+    island.style.setProperty('--bat-o', (47.12 * (1 - idleBat.level)).toFixed(2));
+    island.style.setProperty('--bat-c', idleBat.charging ? 'var(--green)' : pct <= 20 ? 'var(--red)' : '#fff');
+  }
+}
+if (navigator.getBattery) {
+  navigator.getBattery().then((b) => {
+    // PC tanpa baterai biasanya melapor 100% mengisi dengan waktu isi 0
+    if (b.level === 1 && b.charging && b.chargingTime === 0 && b.dischargingTime === Infinity) return;
+    const up = () => { idleBat.level = b.level; idleBat.charging = b.charging; if (P.S) render(); };
+    b.addEventListener('levelchange', up);
+    b.addEventListener('chargingchange', up);
+    up();
+  }).catch(() => {});
+}
+function eyesTick() { // nama lama: sekarang mengatur peralihan ke gaya "setelah lama diam"
   if (!P.S) return;
-  const want = !!P.S.eyes && island.dataset.mode === 'idle' && !P.alert &&
+  const alt = P.S.idleAlt;
+  const want = !!alt && alt !== 'same' && island.dataset.mode === 'idle' && !P.alert &&
     Date.now() - P.lastActive > (P.S.eyesAfter || 20) * 1000;
-  if (want !== P.eyes) { P.eyes = want; api.wantCursor(want); render(); }
+  if (want !== P.alt) { P.alt = want; render(); }
 }
 api.onCursor(({ x, y }) => {
-  if (!P.eyes) return;
+  if (island.dataset.idle !== 'eyes') return;
   const cx = window.innerWidth / 2;
   const ex = Math.max(-1, Math.min(1, (x - cx) / 220)) * 3.5;
   const ey = Math.max(-1, Math.min(1, (y - 16) / 220)) * 3.5;

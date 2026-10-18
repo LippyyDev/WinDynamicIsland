@@ -447,6 +447,9 @@ app.whenReady().then(() => {
       if (s.barTheme && map[s.barTheme]) [s.barColor, s.barEffect] = map[s.barTheme];
       delete s.barTheme; delete s.barTone; s._migrated042 = true; store.set('settings', s);
     } }
+  // migrasi dari 0.4.9: saklar "mata" menjadi pilihan gaya idle (idleAlt)
+  { const s = store.get('settings');
+    if (!s._migrated050) { if (s.eyes === false) s.idleAlt = 'same'; delete s.eyes; s._migrated050 = true; store.set('settings', s); } }
   lastSettings = JSON.parse(JSON.stringify(store.get('settings')));
   log.setLevel(lastSettings.logLevel);
   log.info('app', `Pulau ${app.getVersion()} dimulai (Electron ${process.versions.electron}, Windows ${process.getSystemVersion ? process.getSystemVersion() : ''})`);

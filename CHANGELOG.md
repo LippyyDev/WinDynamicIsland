@@ -2,6 +2,16 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.5.0] 2026-10-19
+
+### Ditambahkan
+- Tampilan idle bisa dikustom: Jam, Tanggal, Teks kustom, Baterai, Napas, Gelombang, Titik kamera, Mata, atau Kosong
+- Pilihan kedua "setelah lama diam" dengan jeda yang bisa diatur (bawaan: Mata, seperti sebelumnya)
+
+### Diubah
+- Saklar "Mata saat diam" diganti pilihan gaya; pengguna yang mematikannya otomatis dimigrasikan ke "Tidak berganti"
+- Gaya idle yang tidak tampil memakai `display: none`, jadi animasinya benar benar berhenti dan tidak memakai GPU
+
 ## [0.4.9] 2026-10-18
 
 ### Diubah
