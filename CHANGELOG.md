@@ -2,6 +2,19 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.4.0] 2026-10-18
+
+### Ditambahkan
+- Bilah menu ala macOS di mode *notch*: logo dengan menu cepat, nama aplikasi aktif, judul jendela, Wi-Fi, volume, baterai, tanggal dan jam
+- Tema warna bilah: Otomatis, Wallpaper, Ikuti tema sistem, Hitam, Transparan
+- Paduan warna: Murni atau Dipadukan dengan tema gelap atau terang Windows
+- Mode Otomatis memakai warna wallpaper saat desktop terlihat dan menyatu dengan bagian atas aplikasi aktif saat ada jendela
+- Pulau tertutup tampil sebagai *notch* polos dengan titik kamera saat bilah menu aktif
+- Setiap item bilah dapat dinyalakan atau dimatikan
+
+### Diperbaiki
+- Teks lagu di pulau kecil bisa hilang karena lebar diukur saat animasi masih berjalan
+
 ## [0.3.0] 2026-10-18
 
 ### Ditambahkan

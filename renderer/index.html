@@ -8,13 +8,27 @@
 <link rel="stylesheet" href="island.css">
 </head>
 <body>
-<div id="bar"></div>
+<div id="bar">
+  <div class="mb-left">
+    <button class="mb-logo" id="mbLogo" title="Menu Pulau"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="4"/><circle cx="8" cy="12" r="1.6" class="dot"/></svg></button>
+    <b id="mbApp"></b>
+    <span id="mbTitle"></span>
+  </div>
+  <div class="mb-gap"></div>
+  <div class="mb-right">
+    <span class="mb-it" id="mbWifi"></span>
+    <span class="mb-it" id="mbVol"></span>
+    <span class="mb-it" id="mbBat"></span>
+    <span class="mb-it mb-clock" id="mbClock"></span>
+  </div>
+</div>
 <div id="island" data-mode="idle">
 <div class="body">
 
   <!-- IDLE: jam atau mata -->
   <div class="view v-idle">
     <div class="idle-clock"><span class="live-dot"></span><span id="clock">00:00</span></div>
+    <div class="cam"></div>
     <div class="eyes"><i class="eye"><b></b></i><i class="eye"><b></b></i></div>
   </div>
 
@@ -170,6 +184,7 @@
 <script src="js/shelf.js"></script>
 <script src="js/todo.js"></script>
 <script src="js/system.js"></script>
+<script src="js/menubar.js"></script>
 <script src="js/boot.js"></script>
 </body>
 </html>

@@ -53,6 +53,20 @@ Windows menyediakan mekanisme *AppBar* (`SHAppBarMessage` di `shell32.dll`) yang
 
 Jendela pulau dibuat selebar layar. Bilah hitam digambar di antarmuka (`#bar`), sedangkan area di luar kapsul tetap tembus klik.
 
+### Bilah menu (`desktop.js`, `renderer/js/menubar.js`)
+
+Proses utama memeriksa lingkungan tiap 700 ms lalu mengirim pesan `env` hanya bila ada perubahan:
+
+| Data | Sumber |
+| --- | --- |
+| Aplikasi aktif dan judul | `GetForegroundWindow`, `GetWindowTextW`, `QueryFullProcessImageNameW`. Kelas `Progman` atau `WorkerW` berarti desktop. *Taskbar* dan jendela Pulau sendiri diabaikan. |
+| Warna wallpaper | `SystemParametersInfoW(SPI_GETDESKWALLPAPER)`, cadangan `TranscodedWallpaper`. Rata-rata 10 persen bagian atas gambar, dihitung ulang hanya bila file berubah. |
+| Warna di bawah bilah | `GetPixel` pada 20 titik tepat di bawah bilah (sisi kiri dan kanan, menghindari pulau), diambil median. Tanpa tangkapan layar penuh, jadi ringan dan tidak memunculkan bingkai perekaman. |
+| Tema gelap atau terang | `nativeTheme.shouldUseDarkColors` |
+| Wi-Fi | `netsh wlan show interfaces` tiap 10 detik di PowerShell |
+
+Antarmuka memilih warna latar sesuai tema bilah, lalu warna teks hitam atau putih berdasarkan luminans relatif (WCAG). Klik pada logo diteruskan karena proses utama menguji beberapa area klik (`island` dan `logo`), dan hanya area `island` yang membuka pulau.
+
 ### Log (`logger.js`)
 
 Satu file `pulau.log`, level `off`, `errors` (WARN dan ERROR), `all` (DEBUG sampai ERROR). Sumber log: proses utama, antarmuka lewat IPC `log` serta `window.onerror`, dan PowerShell lewat pesan `{"type":"log"}` di stdout. File diputar ke `pulau.old.log` setelah 2 MB. Pengaturan menampilkan 400 baris terakhir lewat IPC `log-tail`.

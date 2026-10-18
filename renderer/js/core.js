@@ -132,9 +132,15 @@ function buildCompact() {
 function setMarquee(span, text) {
   if (span.textContent === text) return;
   span.textContent = text;
-  span.classList.remove('scroll');
-  requestAnimationFrame(() => { if (span.scrollWidth > span.parentElement.clientWidth + 2) span.classList.add('scroll'); });
+  checkMarquee(span);
 }
+// Diukur ulang setelah animasi lebar selesai, karena lebar saat transisi belum final.
+function checkMarquee(span = $('#cLine')) {
+  span.classList.remove('scroll');
+  void span.offsetWidth;
+  if (span.scrollWidth > span.parentElement.clientWidth + 2) span.classList.add('scroll');
+}
+island.addEventListener('transitionend', (e) => { if (e.target === island && e.propertyName === 'width') checkMarquee(); });
 
 /* ---------- render ---------- */
 const TITLE_COLOR = { water: 'var(--blue)', shelf: 'var(--amber)', todo: 'var(--green)', pomodoro: 'var(--red)' };
@@ -162,7 +168,9 @@ function render() {
   const notch = !!P.S.notch;
   const barH = Math.max(20, Math.min(60, Number(P.S.barHeight) || 32));
   document.body.classList.toggle('notch', notch);
-  document.body.classList.toggle('bar-black', notch && P.S.notchBlack !== false);
+  document.body.classList.toggle('bar-black', notch && P.S.barTheme !== 'transparent');
+  document.body.classList.toggle('bar-clear', notch && P.S.barTheme === 'transparent');
+  document.body.classList.toggle('menubar', notch && P.S.menubar !== false);
   document.documentElement.style.setProperty('--barh', barH + 'px');
   let w = 150, h = notch ? barH : 32;
   if (mode === 'expanded') { w = P.mods[P.page].width(); h = 190; }
@@ -191,7 +199,8 @@ function render() {
   $$('#dots i').forEach((d) => d.classList.toggle('on', d.dataset.p === P.page));
   $('#navPrev').hidden = $('#navNext').hidden = pages.length < 2;
 
-  for (const m of Object.values(P.mods)) m.decorate && m.decorate(mode);
+  for (const m of Object.values(P.mods)) m.decorate && m.decorate(mode, w);
+  sendRect();
 }
 
 function go(page) {
@@ -288,6 +297,12 @@ api.onCursor(({ x, y }) => {
 /* ---------- area klik untuk main process ---------- */
 function sendRect() {
   const r = island.getBoundingClientRect();
-  api.rect({ x: Math.floor(r.left) - 2, y: 0, w: Math.ceil(r.width) + 4, h: Math.ceil(r.bottom) + 2 });
+  const rects = [{ id: 'island', x: Math.floor(r.left) - 2, y: 0, w: Math.ceil(r.width) + 4, h: Math.ceil(r.bottom) + 2 }];
+  const logo = $('#mbLogo');
+  if (document.body.classList.contains('menubar') && logo && logo.offsetParent) {
+    const l = logo.getBoundingClientRect();
+    rects.push({ id: 'logo', x: Math.floor(l.left), y: 0, w: Math.ceil(l.width), h: Math.ceil(l.bottom) });
+  }
+  api.rect(rects);
 }
 new ResizeObserver(sendRect).observe(island);

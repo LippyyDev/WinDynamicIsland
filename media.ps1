@@ -209,6 +209,17 @@ while ($true) {
     }
   } catch {}
 
+  # jaringan Wi-Fi: tiap 50 tick (10 detik)
+  if (($tick % 50) -eq 2) {
+    try {
+      $o = (netsh wlan show interfaces 2>$null | Out-String)
+      $sig = -1; $ssid = ''
+      if ($o -match '(?m)^\s*(Signal|Sinyal)\s*:\s*(\d+)\s*%') { $sig = [int]$Matches[2] }
+      if ($o -match '(?m)^\s*SSID\s*:\s*(.+?)\s*$') { $ssid = $Matches[1] }
+      Send @{ type = 'net'; signal = $sig; ssid = $ssid }
+    } catch { LogMsg "netsh gagal: $_" "DEBUG" }
+  }
+
   # media: tiap 3 tick (600 ms)
   if (($tick % 3) -eq 1) {
     try {

@@ -18,6 +18,7 @@
 | Notifikasi sistem | Pengisi daya, baterai lemah, *headphone* atau *speaker* terhubung, Caps Lock, volume. |
 | Mata saat diam | Setelah beberapa saat tanpa aktivitas, jam berganti sepasang mata yang mengikuti kursor. |
 | Mode *notch* | Area atas layar dicadangkan seperti *notch* MacBook, jadi jendela yang dimaksimalkan tidak tertutup pulau. Bilah hitam penuh, tinggi bilah dapat diatur, pulau otomatis sembunyi saat layar penuh. |
+| Bilah menu | Seperti macOS: logo dengan menu cepat, aplikasi aktif dan judul jendela di kiri, Wi-Fi, volume, baterai, tanggal dan jam di kanan. Warna bilah: Otomatis (wallpaper saat di desktop, menyatu dengan aplikasi aktif), Wallpaper, Ikuti tema sistem, Hitam, Transparan, dengan opsi dipadukan tema gelap atau terang. |
 | Log aktivitas | Tiga level: Mati, Hanya galat, Semua aktivitas. Ada penampil log di Pengaturan. |
 | Pengaturan | Jendela khusus untuk semua opsi, termasuk menyalakan atau mematikan tiap halaman. |
 
@@ -27,6 +28,7 @@ Dokumen kebutuhan produk ada di [docs/PRD.md](docs/PRD.md), rancangan teknis di 
 
 Gambar di bawah dibuat dengan data contoh.
 
+![Bilah menu dengan berbagai tema](docs/screenshots/bilah-menu.png)
 ![Mode notch](docs/screenshots/notch.png)
 ![Musik dan lirik](docs/screenshots/musik.png)
 ![Pomodoro](docs/screenshots/pomodoro.png)
@@ -72,6 +74,7 @@ preload.js       API aman yang diekspos ke antarmuka
 store.js         penyimpanan lokal (satu file JSON)
 logger.js        pencatat aktivitas dan galat
 appbar.js        mode notch lewat AppBar Windows (koffi + shell32)
+desktop.js       aplikasi aktif, warna wallpaper, sampel warna di bawah bilah (koffi + user32/gdi32)
 media.ps1        pembaca media, volume, dan Caps Lock Windows
 renderer/        antarmuka pulau dan jendela pengaturan
   js/            modul per fitur (music, pomodoro, water, shelf, todo, system)

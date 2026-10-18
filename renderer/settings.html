@@ -39,9 +39,32 @@
     <h2>Mode notch</h2>
     <div class="card">
       <label class="row"><div><b>Potong layar seperti notch</b><span>Area atas layar dicadangkan untuk pulau. Jendela yang dimaksimalkan akan mulai di bawahnya, jadi pulau tidak menutupi tab browser atau menu aplikasi.</span></div><input type="checkbox" class="sw" data-k="notch"></label>
-      <label class="row"><div><b>Bilah atas hitam penuh</b><span>Sisi kiri dan kanan pulau diisi hitam seperti bilah menu MacBook. Matikan untuk melihat wallpaper.</span></div><input type="checkbox" class="sw" data-k="notchBlack"></label>
       <label class="row"><div><b>Tinggi bilah</b><span>Juga menjadi tinggi pulau saat tertutup.</span></div><span class="num"><input type="number" data-k="barHeight" min="24" max="48" step="2"><em>px</em></span></label>
       <label class="row"><div><b>Sembunyikan saat layar penuh</b><span>Pulau hilang saat video, game, atau presentasi dibuka layar penuh. Hanya bekerja di mode notch.</span></div><input type="checkbox" class="sw" data-k="hideOnFullscreen"></label>
+    </div>
+    <h2>Bilah menu</h2>
+    <div class="card">
+      <label class="row"><div><b>Tampilkan bilah menu</b><span>Seperti macOS: aplikasi aktif di kiri, status dan jam di kanan. Klik logo untuk menu cepat.</span></div><input type="checkbox" class="sw" data-k="menubar"></label>
+      <label class="row"><div><b>Warna bilah</b><span>Otomatis: warna wallpaper saat di desktop, menyatu dengan bagian atas aplikasi yang aktif saat ada jendela. Wallpaper: hanya saat desktop terlihat, selain itu ikut tema sistem.</span></div>
+        <select class="sel" data-k="barTheme">
+          <option value="auto">Otomatis</option>
+          <option value="wallpaper">Wallpaper</option>
+          <option value="system">Ikuti tema sistem</option>
+          <option value="black">Hitam</option>
+          <option value="transparent">Transparan</option>
+        </select></label>
+      <label class="row"><div><b>Paduan warna</b><span>Murni memakai warna asli. Dipadukan mencampur warna wallpaper atau aplikasi dengan tema gelap atau terang Windows agar lebih lembut.</span></div>
+        <select class="sel" data-k="barTone">
+          <option value="pure">Murni</option>
+          <option value="theme">Dipadukan dengan tema</option>
+        </select></label>
+      <label class="row"><div><b>Nama aplikasi aktif</b></div><input type="checkbox" class="sw" data-k="mb.app"></label>
+      <label class="row"><div><b>Judul jendela</b></div><input type="checkbox" class="sw" data-k="mb.title"></label>
+      <label class="row"><div><b>Wi-Fi</b><span>Kekuatan sinyal dibaca tiap 10 detik.</span></div><input type="checkbox" class="sw" data-k="mb.wifi"></label>
+      <label class="row"><div><b>Volume</b></div><input type="checkbox" class="sw" data-k="mb.volume"></label>
+      <label class="row"><div><b>Baterai</b><span>Tidak tampil di PC tanpa baterai.</span></div><input type="checkbox" class="sw" data-k="mb.battery"></label>
+      <label class="row"><div><b>Persentase baterai</b></div><input type="checkbox" class="sw" data-k="mb.batteryPct"></label>
+      <label class="row"><div><b>Tanggal dan jam</b></div><input type="checkbox" class="sw" data-k="mb.clock"></label>
     </div>
     <h2>Halaman</h2>
     <div class="card">

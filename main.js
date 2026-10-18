@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, shell, dialog, session } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, shell, dialog, session, nativeTheme } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
@@ -6,13 +6,15 @@ const readline = require('readline');
 const { Store } = require('./store');
 const { Logger } = require('./logger');
 const { AppBar } = require('./appbar');
+const desktop = require('./desktop');
 
 if (!app.requestSingleInstanceLock()) { app.quit(); }
 
 const H = 300;
 let win = null, settingsWin = null, tray = null, store = null, appbar = null;
 let ps = null, cmdPs = null, quitting = false;
-let islandRect = null, inside = false, wantCursor = false;
+let hitRects = [], inside = false, hitId = null, wantCursor = false;
+let env = {}, envSig = '', lastFg = null, envTick = 0;
 let userHidden = false, fullscreenHidden = false;
 let lastSettings = null;
 
@@ -84,11 +86,15 @@ function pollCursor() {
     const p = screen.getCursorScreenPoint();
     const b = win.getBounds();
     const x = p.x - b.x, y = p.y - b.y;
-    const r = islandRect;
-    const now = !!r && x >= r.x && x <= r.x + r.w && y >= r.y - 1 && y <= r.y + r.h;
+    const hit = hitRects.find((r) => x >= r.x && x <= r.x + r.w && y >= r.y - 1 && y <= r.y + r.h);
+    const id = hit ? hit.id : null;
+    if (id !== hitId) {
+      hitId = id;
+      win.setIgnoreMouseEvents(!id, { forward: true });
+    }
+    const now = id === 'island';
     if (now !== inside) {
       inside = now;
-      win.setIgnoreMouseEvents(!now, { forward: true });
       win.webContents.send('hover', now);
     }
     if (wantCursor) win.webContents.send('cursor', { x, y });
@@ -230,7 +236,24 @@ ipcMain.on('media-cmd', (_e, cmd) => {
   if (cmdPs && cmdPs.stdin.writable) cmdPs.stdin.write(cmd + '\n');
   else log.warn('musik', 'Perintah tidak terkirim, proses PowerShell belum siap');
 });
-ipcMain.on('island-rect', (_e, r) => { islandRect = r; });
+ipcMain.on('island-rect', (_e, r) => { hitRects = Array.isArray(r) ? r : (r ? [{ id: 'island', ...r }] : []); });
+ipcMain.on('logo-menu', (_e, x, y) => {
+  const run = (cmd, args) => { try { spawn(cmd, args, { detached: true, stdio: 'ignore', windowsHide: true }).unref(); } catch (e) { log.warn('menu', e.message); } };
+  Menu.buildFromTemplate([
+    { label: 'Tentang Pulau ' + app.getVersion(), click: () => openSettings() },
+    { type: 'separator' },
+    { label: 'Pengaturan Pulau…', click: openSettings },
+    { label: 'Pengaturan Windows', click: () => shell.openExternal('ms-settings:') },
+    { label: 'Task Manager', click: () => run('taskmgr.exe', []) },
+    { type: 'separator' },
+    { label: 'Buka log', click: () => { if (!fs.existsSync(log.file)) fs.writeFileSync(log.file, ''); shell.openPath(log.file); } },
+    { label: 'Sembunyikan pulau', click: () => { setVisible(false); rebuildTray(); } },
+    { type: 'separator' },
+    { label: 'Kunci layar', click: () => run('rundll32.exe', ['user32.dll,LockWorkStation']) },
+    { label: 'Keluar dari Pulau', click: () => { quitting = true; app.quit(); } }
+  ]).popup({ window: win, x: Math.round(x), y: Math.round(y) });
+  log.info('menu', 'Menu logo dibuka');
+});
 ipcMain.on('want-cursor', (_e, v) => { wantCursor = !!v; });
 ipcMain.handle('store-get', (_e, k) => store.get(k));
 ipcMain.on('store-set', (e, k, v) => {
@@ -275,6 +298,52 @@ ipcMain.handle('log-size', () => log.size());
 ipcMain.on('log-clear', () => { log.clear(); log.info('log', 'Log dikosongkan'); });
 ipcMain.on('log-open', () => { if (!fs.existsSync(log.file)) fs.writeFileSync(log.file, ''); shell.openPath(log.file); });
 
+/* ---------------- lingkungan bilah menu ---------------- */
+function ownHandles() {
+  const out = [];
+  for (const w of [win, settingsWin]) {
+    if (!w || w.isDestroyed()) continue;
+    const b = w.getNativeWindowHandle();
+    out.push(Number(b.length >= 8 ? b.readBigUInt64LE(0) : b.readUInt32LE(0)));
+  }
+  return out;
+}
+function pollEnv() {
+  if (!win || win.isDestroyed()) return;
+  const s = store.get('settings');
+  envTick++;
+  const next = { dark: nativeTheme.shouldUseDarkColors, online: true };
+  if (s.notch && s.menubar !== false && desktop.available()) {
+    let fg = desktop.foreground();
+    if (fg && (fg.shell || ownHandles().includes(fg.hwnd))) {
+      if (settingsWin && !settingsWin.isDestroyed() && ownHandles()[1] === fg.hwnd) fg = { ...fg, app: 'Pulau', title: 'Pengaturan', desktop: false };
+      else fg = lastFg;
+    }
+    if (fg) lastFg = fg;
+    next.app = fg ? fg.app : '';
+    next.title = fg && !fg.desktop ? fg.title : '';
+    next.desktop = !!(fg && fg.desktop);
+    const theme = s.barTheme || 'auto';
+    if (theme === 'wallpaper' || theme === 'auto' || theme === 'transparent') {
+      if (envTick % 8 === 1 || !env.wall) next.wall = desktop.wallpaperColor(); else next.wall = env.wall;
+    }
+    if ((theme === 'auto' || theme === 'transparent') && !next.desktop) {
+      if (envTick % 2 === 0 || !env.under) {
+        const d = screen.getPrimaryDisplay();
+        const phys = screen.dipToScreenRect(win, d.bounds);
+        const barPx = Math.round((Number(s.barHeight) || 32) * d.scaleFactor);
+        next.under = desktop.sampleBelow({ x: phys.x, y: phys.y, width: phys.width }, barPx) || env.under || null;
+      } else next.under = env.under;
+    }
+  }
+  const sig = JSON.stringify(next);
+  if (sig !== envSig) {
+    if (env.app !== next.app && next.app) log.debug('bilah', 'Aplikasi aktif: ' + next.app);
+    envSig = sig; env = next;
+    win.webContents.send('env', env);
+  }
+}
+
 /* ---------------- tray ---------------- */
 function rebuildTray() {
   if (!tray) return;
@@ -304,6 +373,8 @@ app.on('second-instance', openSettings);
 
 app.whenReady().then(() => {
   store = new Store(app.getPath('userData'));
+  // migrasi dari 0.3.0: notchBlack false berarti bilah transparan
+  { const s = store.get('settings'); if (s.notchBlack === false && !s._migrated03) { s.barTheme = 'transparent'; } s._migrated03 = true; store.set('settings', s); }
   lastSettings = JSON.parse(JSON.stringify(store.get('settings')));
   log.setLevel(lastSettings.logLevel);
   log.info('app', `Pulau ${app.getVersion()} dimulai (Electron ${process.versions.electron}, Windows ${process.getSystemVersion ? process.getSystemVersion() : ''})`);
@@ -324,6 +395,9 @@ app.whenReady().then(() => {
   createWindow();
   buildTray();
   pollCursor();
+  setInterval(pollEnv, 700);
+  nativeTheme.on('updated', () => { log.info('tema', 'Tema sistem: ' + (nativeTheme.shouldUseDarkColors ? 'gelap' : 'terang')); pollEnv(); });
+  if (!desktop.available()) log.warn('bilah', 'Info desktop tidak tersedia: ' + desktop.error());
   startMedia();
   startCmd();
 });
