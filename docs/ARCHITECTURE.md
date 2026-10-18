@@ -55,17 +55,22 @@ Jendela pulau dibuat selebar layar. Bilah hitam digambar di antarmuka (`#bar`), 
 
 ### Bilah menu (`desktop.js`, `renderer/js/menubar.js`)
 
-Proses utama memeriksa lingkungan tiap 700 ms lalu mengirim pesan `env` hanya bila ada perubahan:
+Proses utama memeriksa lingkungan tiap 1 detik lalu mengirim pesan `env` hanya bila ada perubahan. Aplikasi aktif hanya dibaca bila dipakai (nama atau judul tampil di bilah, atau tema Wallpaper dan Transparan butuh tahu apakah desktop terlihat):
 
 | Data | Sumber |
 | --- | --- |
 | Aplikasi aktif dan judul | `GetForegroundWindow`, `GetWindowTextW`, `QueryFullProcessImageNameW`. Kelas `Progman` atau `WorkerW` berarti desktop. *Taskbar* dan jendela Pulau sendiri diabaikan. |
 | Warna wallpaper | `SystemParametersInfoW(SPI_GETDESKWALLPAPER)`, cadangan `TranscodedWallpaper`. Rata-rata 10 persen bagian atas gambar, dihitung ulang hanya bila file berubah. |
-| Warna di bawah bilah | `GetPixel` pada 20 titik tepat di bawah bilah (sisi kiri dan kanan, menghindari pulau), diambil median. Tanpa tangkapan layar penuh, jadi ringan dan tidak memunculkan bingkai perekaman. |
 | Tema gelap atau terang | `nativeTheme.shouldUseDarkColors` |
 | Wi-Fi | `netsh wlan show interfaces` tiap 10 detik di PowerShell |
 
-Antarmuka memilih warna latar sesuai tema bilah, lalu warna teks hitam atau putih berdasarkan luminans relatif (WCAG). Klik pada logo diteruskan karena proses utama menguji beberapa area klik (`island` dan `logo`), dan hanya area `island` yang membuka pulau.
+Tema bilah: `system` (hitam saat Windows gelap, putih saat terang), `wallpaper` (warna wallpaper hanya saat desktop terlihat), `transparent` (tanpa latar), `blur` (tanpa latar di antarmuka, blur digambar jendela terpisah). Warna teks hitam atau putih dipilih dari luminans relatif (WCAG).
+
+Versi 0.4.0 sempat membaca warna aplikasi aktif lewat `GetPixel` pada 20 titik layar. Cara itu membuat Pulau berat karena `GetPixel` pada layar lambat dan berjalan di proses utama, sehingga dihapus di 0.4.1. Klik pada logo diteruskan karena proses utama menguji beberapa area klik (`island` dan `logo`), dan hanya area `island` yang membuka pulau.
+
+### Latar blur (`blur.js`)
+
+CSS `backdrop-filter` hanya mengaburkan isi halaman sendiri, bukan jendela lain di belakangnya, jadi blur sungguhan harus dibuat sistem. Saat tema **Blur** dipilih, proses utama membuat jendela kedua yang kecil, transparan, tanpa fokus, dan tembus klik, selebar layar setinggi bilah. `SetWindowCompositionAttribute` (`ACCENT_ENABLE_ACRYLICBLURBEHIND`, cadangan `ACCENT_ENABLE_BLURBEHIND`) lewat koffi mengaktifkan acrylic dengan warna tinta mengikuti tema sistem dan alpha dari pengaturan **Kepekatan blur**. Jendela pulau diletakkan di atasnya (`moveTop`) dengan latar transparan, jadi teks bilah tampil di atas kaca buram. Blur digambar DWM di kartu grafis, tanpa membaca layar. Jendela ini dibuat hanya saat tema Blur aktif dan ditutup saat tema lain dipilih. Bila pemanggilan gagal, antarmuka kembali ke warna tema sistem.
 
 ### Log (`logger.js`)
 

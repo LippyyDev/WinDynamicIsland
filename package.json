@@ -1,7 +1,7 @@
 {
   "name": "pulau",
   "productName": "Pulau",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Dynamic Island untuk Windows",
   "author": "LIP (Muhammad Alif Qadri)",
   "main": "main.js",
@@ -19,6 +19,7 @@
       "logger.js",
       "appbar.js",
       "desktop.js",
+      "blur.js",
       "renderer/**",
       "assets/**",
       "!node_modules/koffi/build/koffi/!(win32_x64)/**",

@@ -6,7 +6,7 @@ P.mods.menubar = (() => {
   let vol = null;
   let bat = null;
 
-  const DARK = [28, 28, 32], LIGHT = [244, 244, 247];
+  const BLACK = [0, 0, 0], WHITE = [255, 255, 255];
   const mix = (a, b, t) => a.map((v, i) => Math.round(v * (1 - t) + b[i] * t));
   const lum = ([r, g, b]) => {
     const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
@@ -14,32 +14,33 @@ P.mods.menubar = (() => {
   };
   const css = (c) => `rgb(${c.join(',')})`;
 
-  /* ---------- warna ---------- */
+  /* ---------- warna ----------
+     system: hitam saat Windows gelap, putih saat terang.
+     wallpaper: warna wallpaper hanya saat desktop terlihat, selain itu seperti system.
+     transparent: tanpa latar. blur: tanpa latar, blur digambar oleh jendela terpisah di proses utama.
+     Tidak ada pembacaan piksel layar, jadi tidak ada beban. */
   function colors() {
     const S = P.S;
-    const theme = S.barTheme || 'auto';
-    const base = env.dark ? DARK : LIGHT;
+    let theme = S.barTheme || 'system';
+    if (theme === 'blur' && env.blur === false) theme = 'system'; // blur gagal dibuat, pakai warna tema
+    const base = env.dark ? BLACK : WHITE;
     const tone = (c) => (S.barTone === 'theme' ? mix(c, base, 0.55) : c);
-    let bg;
-    switch (theme) {
-      case 'black': bg = [0, 0, 0]; break;
-      case 'system': bg = base; break;
-      case 'wallpaper': bg = env.desktop && env.wall ? tone(env.wall) : base; break;
-      case 'transparent': bg = (env.desktop ? env.wall : env.under || env.wall) || [0, 0, 0]; break;
-      default: // auto
-        if (env.desktop) bg = env.wall ? tone(env.wall) : base;
-        else bg = env.under ? (S.barTone === 'theme' ? mix(env.under, base, 0.25) : env.under) : base;
-    }
-    const light = lum(bg) > 0.3;
-    return { bg, fg: light ? [22, 22, 26] : [255, 255, 255], light };
+    let bg = base, clear = false, ref = base;
+    if (theme === 'wallpaper' && env.desktop && env.wall) { bg = tone(env.wall); ref = bg; }
+    else if (theme === 'transparent') { bg = null; clear = true; ref = env.desktop && env.wall ? env.wall : base; }
+    else if (theme === 'blur') { bg = null; clear = true; ref = base; }
+    const light = lum(ref) > 0.3;
+    return { bg, clear, fg: light ? [22, 22, 26] : [255, 255, 255], light };
   }
   function applyColors() {
     if (!P.S) return;
     const c = colors();
     const root = document.documentElement.style;
-    root.setProperty('--bar-bg', css(c.bg));
+    root.setProperty('--bar-bg', c.bg ? css(c.bg) : 'transparent');
     root.setProperty('--bar-fg', css(c.fg));
-    root.setProperty('--bar-shadow', c.light ? 'none' : '0 1px 2px rgba(0,0,0,.45)');
+    root.setProperty('--bar-shadow', !c.clear ? 'none' : c.light ? '0 1px 2px rgba(255,255,255,.4)' : '0 1px 3px rgba(0,0,0,.6)');
+    document.body.classList.toggle('bar-black', !!P.S.notch && !c.clear);
+    document.body.classList.toggle('bar-clear', !!P.S.notch && c.clear);
   }
 
   /* ---------- ikon ---------- */

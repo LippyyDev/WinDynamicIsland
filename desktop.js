@@ -1,5 +1,5 @@
-// Info desktop untuk bilah menu: aplikasi aktif, warna wallpaper, dan warna area di bawah bilah.
-// Memakai Win32 (user32, kernel32, gdi32) lewat koffi. Semua fungsi aman dipanggil di luar Windows (mengembalikan null).
+// Info desktop untuk bilah menu: aplikasi aktif dan warna wallpaper.
+// Memakai Win32 (user32, kernel32) lewat koffi. Tidak membaca piksel layar, karena GetPixel pada layar lambat dan membuat Pulau berat. Semua fungsi aman dipanggil di luar Windows (mengembalikan null).
 const fs = require('fs');
 const path = require('path');
 const { nativeImage } = require('electron');
@@ -14,16 +14,12 @@ function load() {
     const koffi = require('koffi');
     const u = koffi.load('user32.dll');
     const k = koffi.load('kernel32.dll');
-    const g = koffi.load('gdi32.dll');
     F = {
       GetForegroundWindow: u.func('__stdcall', 'GetForegroundWindow', 'intptr', []),
       GetClassNameW: u.func('__stdcall', 'GetClassNameW', 'int', ['intptr', 'void*', 'int']),
       GetWindowTextW: u.func('__stdcall', 'GetWindowTextW', 'int', ['intptr', 'void*', 'int']),
       GetWindowThreadProcessId: u.func('__stdcall', 'GetWindowThreadProcessId', 'uint32', ['intptr', koffi.out(koffi.pointer('uint32'))]),
       SystemParametersInfoW: u.func('__stdcall', 'SystemParametersInfoW', 'bool', ['uint32', 'uint32', 'void*', 'uint32']),
-      GetDC: u.func('__stdcall', 'GetDC', 'intptr', ['intptr']),
-      ReleaseDC: u.func('__stdcall', 'ReleaseDC', 'int', ['intptr', 'intptr']),
-      GetPixel: g.func('__stdcall', 'GetPixel', 'uint32', ['intptr', 'int', 'int']),
       OpenProcess: k.func('__stdcall', 'OpenProcess', 'intptr', ['uint32', 'bool', 'uint32']),
       QueryFullProcessImageNameW: k.func('__stdcall', 'QueryFullProcessImageNameW', 'bool', ['intptr', 'uint32', 'void*', koffi.inout(koffi.pointer('uint32'))]),
       CloseHandle: k.func('__stdcall', 'CloseHandle', 'bool', ['intptr'])
@@ -109,30 +105,4 @@ function wallpaperColor() {
   } catch (_) { return null; }
 }
 
-// Sampel warna tepat di bawah bilah (piksel fisik), menghindari bagian tengah tempat pulau berada
-function sampleBelow(rect, barPx) {
-  const f = load(); if (!f) return null;
-  let hdc = 0;
-  try {
-    hdc = f.GetDC(0);
-    if (!hdc) return null;
-    const y = rect.y + barPx + 3;
-    const xs = [];
-    for (let i = 0; i < 10; i++) {
-      xs.push(rect.x + Math.round(rect.width * (0.04 + i * 0.03)));
-      xs.push(rect.x + Math.round(rect.width * (0.66 + i * 0.03)));
-    }
-    const R = [], G = [], B = [];
-    for (const x of xs) {
-      const c = f.GetPixel(hdc, x, y);
-      if (c === 0xFFFFFFFF) continue; // CLR_INVALID
-      R.push(c & 0xff); G.push((c >> 8) & 0xff); B.push((c >> 16) & 0xff);
-    }
-    if (!R.length) return null;
-    const med = (a) => a.sort((p, q) => p - q)[a.length >> 1];
-    return [med(R), med(G), med(B)];
-  } catch (_) { return null; }
-  finally { try { if (hdc) f.ReleaseDC(0, hdc); } catch (_) {} }
-}
-
-module.exports = { foreground, wallpaperColor, sampleBelow, available: () => !!load(), error: () => loadError };
+module.exports = { foreground, wallpaperColor, available: () => !!load(), error: () => loadError };

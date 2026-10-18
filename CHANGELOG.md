@@ -2,6 +2,22 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.4.1] 2026-10-18
+
+### Ditambahkan
+- Warna bilah **Blur**: tembus pandang dengan latar buram (acrylic), kepekatan dapat diatur di Pengaturan
+- Warna bilah **Transparan** sungguhan, teks mengikuti wallpaper saat di desktop
+
+### Diubah
+- Pilihan warna bilah disederhanakan menjadi Ikuti tema sistem, Wallpaper, Transparan, dan Blur
+- Ikuti tema sistem kini hitam murni saat Windows gelap dan putih murni saat terang
+- Pembaruan lingkungan bilah tiap 1 detik (sebelumnya 0,7 detik) dan aplikasi aktif hanya dibaca bila dipakai
+- Pengaturan lama Otomatis dan Hitam dipindahkan ke Ikuti tema sistem secara otomatis
+
+### Dihapus
+- Warna bilah Otomatis dan Hitam
+- Pembacaan piksel layar (`GetPixel`) yang membuat Pulau berat
+
 ## [0.4.0] 2026-10-18
 
 ### Ditambahkan

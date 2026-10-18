@@ -168,8 +168,6 @@ function render() {
   const notch = !!P.S.notch;
   const barH = Math.max(20, Math.min(60, Number(P.S.barHeight) || 32));
   document.body.classList.toggle('notch', notch);
-  document.body.classList.toggle('bar-black', notch && P.S.barTheme !== 'transparent');
-  document.body.classList.toggle('bar-clear', notch && P.S.barTheme === 'transparent');
   document.body.classList.toggle('menubar', notch && P.S.menubar !== false);
   document.documentElement.style.setProperty('--barh', barH + 'px');
   let w = 150, h = notch ? barH : 32;

@@ -2,7 +2,7 @@
 
 *Dynamic Island* untuk Windows 10 dan 11. Sebuah kapsul hitam di tengah atas layar yang menampilkan pemutar musik dengan lirik tersinkron, timer Pomodoro, pengingat minum, rak file, daftar tugas, dan notifikasi sistem. Semua data tersimpan di PC sendiri, tanpa akun dan tanpa server.
 
-> Status: versi 0.2.0 (awal). Dibuat dengan Electron. Bagian yang membaca musik dan sistem dari Windows belum diuji pada banyak perangkat, jadi laporan *bug* sangat membantu.
+> Status: versi 0.4.1. Dibuat dengan Electron. Bagian yang membaca musik dan sistem dari Windows belum diuji pada banyak perangkat, jadi laporan *bug* sangat membantu.
 
 ## Fitur
 
@@ -18,7 +18,7 @@
 | Notifikasi sistem | Pengisi daya, baterai lemah, *headphone* atau *speaker* terhubung, Caps Lock, volume. |
 | Mata saat diam | Setelah beberapa saat tanpa aktivitas, jam berganti sepasang mata yang mengikuti kursor. |
 | Mode *notch* | Area atas layar dicadangkan seperti *notch* MacBook, jadi jendela yang dimaksimalkan tidak tertutup pulau. Bilah hitam penuh, tinggi bilah dapat diatur, pulau otomatis sembunyi saat layar penuh. |
-| Bilah menu | Seperti macOS: logo dengan menu cepat, aplikasi aktif dan judul jendela di kiri, Wi-Fi, volume, baterai, tanggal dan jam di kanan. Warna bilah: Otomatis (wallpaper saat di desktop, menyatu dengan aplikasi aktif), Wallpaper, Ikuti tema sistem, Hitam, Transparan, dengan opsi dipadukan tema gelap atau terang. |
+| Bilah menu | Seperti macOS: logo dengan menu cepat, aplikasi aktif dan judul jendela di kiri, Wi-Fi, volume, baterai, tanggal dan jam di kanan. Warna bilah: Ikuti tema sistem (hitam saat Windows gelap, putih saat terang), Wallpaper (hanya saat desktop terlihat), Transparan, atau Blur (tembus pandang dengan latar buram, kepekatan dapat diatur). |
 | Log aktivitas | Tiga level: Mati, Hanya galat, Semua aktivitas. Ada penampil log di Pengaturan. |
 | Pengaturan | Jendela khusus untuk semua opsi, termasuk menyalakan atau mematikan tiap halaman. |
 
@@ -64,7 +64,7 @@ npm run dist       # bangun installer di folder dist/
 
 Di Linux atau macOS, antarmuka tetap bisa dibuka untuk pengerjaan tampilan, tetapi data musik dan sistem tidak tersedia karena memakai PowerShell dan API Windows.
 
-*Installer* juga dibangun otomatis oleh GitHub Actions (`.github/workflows/build.yml`) pada setiap *push*. Untuk membuat rilis, beri *tag* `v0.2.0` dan hasilnya terlampir di halaman Releases.
+*Installer* juga dibangun otomatis oleh GitHub Actions (`.github/workflows/build.yml`) pada setiap *push*. Untuk membuat rilis, beri *tag* `v0.4.1` dan hasilnya terlampir di halaman Releases.
 
 ## Struktur proyek
 
@@ -74,7 +74,8 @@ preload.js       API aman yang diekspos ke antarmuka
 store.js         penyimpanan lokal (satu file JSON)
 logger.js        pencatat aktivitas dan galat
 appbar.js        mode notch lewat AppBar Windows (koffi + shell32)
-desktop.js       aplikasi aktif, warna wallpaper, sampel warna di bawah bilah (koffi + user32/gdi32)
+blur.js          latar blur bilah (acrylic) lewat SetWindowCompositionAttribute (koffi + user32)
+desktop.js       aplikasi aktif dan warna wallpaper (koffi + user32/kernel32)
 media.ps1        pembaca media, volume, dan Caps Lock Windows
 renderer/        antarmuka pulau dan jendela pengaturan
   js/            modul per fitur (music, pomodoro, water, shelf, todo, system)

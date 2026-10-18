@@ -14,7 +14,7 @@ html, body {
   position: absolute; left: 0; right: 0; top: 0; height: var(--barh, 32px); display: none;
   grid-template-columns: 1fr var(--gapw, 190px) 1fr; align-items: center; padding: 0 12px 0 10px;
   background: var(--bar-bg, #000); color: var(--bar-fg, #fff);
-  transition: background-color .6s ease, color .4s ease; pointer-events: none;
+  transition: background-color .25s ease, color .25s ease; pointer-events: none;
   font-size: 12.5px; font-weight: 600; letter-spacing: .1px;
 }
 body.notch #bar { display: grid; }

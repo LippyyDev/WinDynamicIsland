@@ -7,12 +7,14 @@ const { Store } = require('./store');
 const { Logger } = require('./logger');
 const { AppBar } = require('./appbar');
 const desktop = require('./desktop');
+const blur = require('./blur');
 
 if (!app.requestSingleInstanceLock()) { app.quit(); }
 
 const H = 300;
 let win = null, settingsWin = null, tray = null, store = null, appbar = null;
 let ps = null, cmdPs = null, quitting = false;
+let blurWin = null, blurOk = null; // blurOk: null belum dicoba, '' gagal, 'acrylic' atau 'blur' aktif
 let hitRects = [], inside = false, hitId = null, wantCursor = false;
 let env = {}, envSig = '', lastFg = null, envTick = 0;
 let userHidden = false, fullscreenHidden = false;
@@ -51,7 +53,7 @@ function createWindow() {
   win.webContents.on('console-message', (_e, level, message, line, source) => {
     if (level >= 3) log.error('renderer', `${message} (${path.basename(source || '')}:${line})`);
   });
-  const onDisplay = () => { log.info('layar', 'Konfigurasi layar berubah'); place(); applyNotch(); };
+  const onDisplay = () => { log.info('layar', 'Konfigurasi layar berubah'); place(); applyNotch(); syncBlur(); };
   screen.on('display-metrics-changed', onDisplay);
   screen.on('display-added', onDisplay);
   screen.on('display-removed', onDisplay);
@@ -64,6 +66,7 @@ function createWindow() {
     log.info('notch', on ? 'Aplikasi layar penuh terdeteksi, pulau disembunyikan' : 'Layar penuh selesai, pulau ditampilkan');
     fullscreenHidden = on;
     if (on) win.hide(); else if (!userHidden) win.showInactive();
+    syncBlur();
   };
 }
 
@@ -77,6 +80,62 @@ function applyNotch() {
   const barH = Math.max(20, Math.min(60, Number(s.barHeight) || 32));
   const phys = process.platform === 'win32' ? screen.dipToScreenRect(win, { x: b.x, y: b.y, width: b.width, height: barH }) : { x: b.x, y: b.y, width: b.width, height: barH };
   appbar.apply({ left: phys.x, top: phys.y, right: phys.x + phys.width, bottom: phys.y + phys.height }, phys.height);
+}
+
+/* ---------------- latar blur bilah ---------------- */
+// Jendela kecil setinggi bilah di belakang jendela pulau. Jendela pulau memakai latar transparan
+// sehingga blur dari sistem (acrylic) terlihat tembus di belakang teks bilah.
+const hwndOf = (w) => { const b = w.getNativeWindowHandle(); return Number(b.length >= 8 ? b.readBigUInt64LE(0) : b.readUInt32LE(0)); };
+
+function blurTint(s) {
+  const k = Math.max(0, Math.min(100, Number(s.barBlurTint ?? 40)));
+  const a = Math.round(16 + (k / 100) * 219); // alpha 0 membuat efek hilang di Windows 10, jadi ada batas bawah
+  const [r, g, b] = nativeTheme.shouldUseDarkColors ? [10, 10, 12] : [248, 248, 250];
+  return { r, g, b, a };
+}
+function applyBlur() {
+  if (!blurWin || blurWin.isDestroyed()) return;
+  const was = blurOk;
+  blurOk = blur.enable(hwndOf(blurWin), blurTint(store.get('settings')));
+  if (blurOk !== was) {
+    if (blurOk) log.info('blur', 'Latar blur aktif (' + blurOk + ')');
+    else log.warn('blur', 'Latar blur gagal, bilah memakai warna tema sistem. ' + (blur.error() || 'SetWindowCompositionAttribute ditolak'));
+    pollEnv();
+  }
+}
+function syncBlur() {
+  const s = store ? store.get('settings') : null;
+  const want = !!(s && win && !win.isDestroyed() && process.platform === 'win32' && s.notch && s.barTheme === 'blur' && !userHidden && !fullscreenHidden);
+  if (!want) {
+    if (blurWin && !blurWin.isDestroyed()) { blurWin.destroy(); log.info('blur', 'Jendela latar blur ditutup'); }
+    blurWin = null;
+    if (blurOk !== null) { blurOk = null; pollEnv(); }
+    return;
+  }
+  const b = primaryBounds();
+  const barH = Math.max(20, Math.min(60, Number(s.barHeight) || 32));
+  if (blurWin && !blurWin.isDestroyed()) {
+    blurWin.setBounds({ x: b.x, y: b.y, width: b.width, height: barH });
+    applyBlur();
+    return;
+  }
+  blurWin = new BrowserWindow({
+    x: b.x, y: b.y, width: b.width, height: barH,
+    frame: false, transparent: true, resizable: false, movable: false, minimizable: false, maximizable: false, focusable: false,
+    skipTaskbar: true, alwaysOnTop: true, hasShadow: false, show: false, backgroundColor: '#00000000',
+    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false }
+  });
+  blurWin.setAlwaysOnTop(true, 'screen-saver');
+  blurWin.setIgnoreMouseEvents(true);
+  blurWin.on('closed', () => { blurWin = null; });
+  blurWin.webContents.once('did-finish-load', () => {
+    if (!blurWin || blurWin.isDestroyed()) return;
+    blurWin.showInactive();
+    applyBlur();
+    if (win && !win.isDestroyed()) win.moveTop(); // jendela pulau harus tetap di atas latar blur
+  });
+  blurWin.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent('<!doctype html><body style="margin:0;background:transparent">'));
+  log.info('blur', 'Jendela latar blur dibuat');
 }
 
 // Posisi kursor dibaca langsung dari sistem, jadi tetap terdeteksi saat menyeret file.
@@ -104,6 +163,7 @@ function pollCursor() {
 function setVisible(v) {
   userHidden = !v;
   if (v && !fullscreenHidden) win.showInactive(); else win.hide();
+  syncBlur();
   log.info('tray', v ? 'Pulau ditampilkan' : 'Pulau disembunyikan');
 }
 
@@ -229,6 +289,8 @@ function onSettingsChanged(next) {
   lastSettings = JSON.parse(JSON.stringify(next));
   log.setLevel(next.logLevel);
   if (prev.notch !== next.notch || prev.barHeight !== next.barHeight) applyNotch();
+  if (prev.notch !== next.notch || prev.barHeight !== next.barHeight || prev.barTheme !== next.barTheme || prev.barBlurTint !== next.barBlurTint) syncBlur();
+  if (JSON.stringify([prev.barTheme, prev.mb, prev.menubar, prev.notch]) !== JSON.stringify([next.barTheme, next.mb, next.menubar, next.notch])) pollEnv();
 }
 
 ipcMain.on('media-cmd', (_e, cmd) => {
@@ -309,11 +371,16 @@ function ownHandles() {
   return out;
 }
 function pollEnv() {
-  if (!win || win.isDestroyed()) return;
+  if (!win || win.isDestroyed() || !store) return;
   const s = store.get('settings');
   envTick++;
-  const next = { dark: nativeTheme.shouldUseDarkColors, online: true };
-  if (s.notch && s.menubar !== false && desktop.available()) {
+  const theme = s.barTheme || 'system';
+  const mb = s.mb || {};
+  const next = { dark: nativeTheme.shouldUseDarkColors, blur: blurOk !== '' };
+  // Aplikasi aktif hanya dibaca bila dipakai: tampil di bilah, atau tema membutuhkan tahu apakah desktop terlihat.
+  const needFg = s.notch && s.menubar !== false && desktop.available() &&
+    (mb.app !== false || mb.title !== false || theme === 'wallpaper' || theme === 'transparent');
+  if (needFg) {
     let fg = desktop.foreground();
     if (fg && (fg.shell || ownHandles().includes(fg.hwnd))) {
       if (settingsWin && !settingsWin.isDestroyed() && ownHandles()[1] === fg.hwnd) fg = { ...fg, app: 'Pulau', title: 'Pengaturan', desktop: false };
@@ -323,17 +390,8 @@ function pollEnv() {
     next.app = fg ? fg.app : '';
     next.title = fg && !fg.desktop ? fg.title : '';
     next.desktop = !!(fg && fg.desktop);
-    const theme = s.barTheme || 'auto';
-    if (theme === 'wallpaper' || theme === 'auto' || theme === 'transparent') {
-      if (envTick % 8 === 1 || !env.wall) next.wall = desktop.wallpaperColor(); else next.wall = env.wall;
-    }
-    if ((theme === 'auto' || theme === 'transparent') && !next.desktop) {
-      if (envTick % 2 === 0 || !env.under) {
-        const d = screen.getPrimaryDisplay();
-        const phys = screen.dipToScreenRect(win, d.bounds);
-        const barPx = Math.round((Number(s.barHeight) || 32) * d.scaleFactor);
-        next.under = desktop.sampleBelow({ x: phys.x, y: phys.y, width: phys.width }, barPx) || env.under || null;
-      } else next.under = env.under;
+    if (theme === 'wallpaper' || theme === 'transparent') {
+      next.wall = (envTick % 8 === 1 || !env.wall) ? desktop.wallpaperColor() : env.wall; // hasil di-cache menurut berkas, murah
     }
   }
   const sig = JSON.stringify(next);
@@ -375,6 +433,9 @@ app.whenReady().then(() => {
   store = new Store(app.getPath('userData'));
   // migrasi dari 0.3.0: notchBlack false berarti bilah transparan
   { const s = store.get('settings'); if (s.notchBlack === false && !s._migrated03) { s.barTheme = 'transparent'; } s._migrated03 = true; store.set('settings', s); }
+  // migrasi dari 0.4.0: tema Otomatis dan Hitam dihapus (pembacaan piksel membuat berat), diganti Ikuti tema sistem
+  { const s = store.get('settings');
+    if (!s._migrated041) { if (s.barTheme === 'auto' || s.barTheme === 'black') s.barTheme = 'system'; s._migrated041 = true; store.set('settings', s); } }
   lastSettings = JSON.parse(JSON.stringify(store.get('settings')));
   log.setLevel(lastSettings.logLevel);
   log.info('app', `Pulau ${app.getVersion()} dimulai (Electron ${process.versions.electron}, Windows ${process.getSystemVersion ? process.getSystemVersion() : ''})`);
@@ -393,10 +454,11 @@ app.whenReady().then(() => {
     if (!fs.existsSync(flag)) { app.setLoginItemSettings({ openAtLogin: true }); try { fs.writeFileSync(flag, '1'); } catch (_) {} }
   }
   createWindow();
+  win.once('ready-to-show', () => syncBlur());
   buildTray();
   pollCursor();
-  setInterval(pollEnv, 700);
-  nativeTheme.on('updated', () => { log.info('tema', 'Tema sistem: ' + (nativeTheme.shouldUseDarkColors ? 'gelap' : 'terang')); pollEnv(); });
+  setInterval(pollEnv, 1000);
+  nativeTheme.on('updated', () => { log.info('tema', 'Tema sistem: ' + (nativeTheme.shouldUseDarkColors ? 'gelap' : 'terang')); applyBlur(); pollEnv(); });
   if (!desktop.available()) log.warn('bilah', 'Info desktop tidak tersedia: ' + desktop.error());
   startMedia();
   startCmd();
@@ -406,6 +468,7 @@ app.on('before-quit', () => {
   quitting = true;
   log.info('app', 'Pulau ditutup');
   if (appbar) appbar.remove();
+  if (blurWin && !blurWin.isDestroyed()) blurWin.destroy();
   if (store) store.flush();
   for (const p of [ps, cmdPs]) if (p) { try { p.stdin.end(); p.kill(); } catch (_) {} }
 });
