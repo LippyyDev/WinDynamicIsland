@@ -467,12 +467,17 @@ let perfBase = 0;
 function perfLog() {
   try {
     const m = app.getAppMetrics();
-    const mb = Math.round(m.reduce((a, x) => a + ((x.memory && x.memory.workingSetSize) || 0), 0) / 1024);
+    const names = new Map();
+    const tag = (w, n) => { try { if (w && !w.isDestroyed()) names.set(w.webContents.getOSProcessId(), n); } catch (_) {} };
+    tag(win, 'pulau'); tag(settingsWin, 'pengaturan'); tag(blurWin, 'blur');
+    const mem = (x) => Math.round(((x.memory && x.memory.workingSetSize) || 0) / 1024);
+    const total = m.reduce((a, x) => a + mem(x), 0);
     const cpu = m.reduce((a, x) => a + ((x.cpu && x.cpu.percentCPUUsage) || 0), 0);
     const heap = Math.round(process.memoryUsage().heapUsed / 1048576);
-    if (!perfBase) perfBase = mb;
-    const msg = `Memori ${mb} MB (${m.length} proses, heap utama ${heap} MB), CPU rata-rata ${cpu.toFixed(1)}%`;
-    if (mb > perfBase * 2 && mb - perfBase > 200) log.warn('kinerja', msg + `, naik dari ${perfBase} MB saat mulai`);
+    if (!perfBase) perfBase = total;
+    const rinci = m.map((x) => `${names.get(x.pid) || x.type}${x.name ? ':' + x.name : ''} ${mem(x)}`).sort().join(', ');
+    const msg = `Memori ${total} MB (${m.length} proses, heap utama ${heap} MB), CPU rata-rata ${cpu.toFixed(1)}%. Rincian MB: ${rinci}`;
+    if (total > perfBase * 2 && total - perfBase > 200) log.warn('kinerja', msg + `. Naik dari ${perfBase} MB saat mulai`);
     else log.info('kinerja', msg);
   } catch (e) { log.warn('kinerja', e.message); }
 }

@@ -2,6 +2,11 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.4.5] 2026-10-18
+
+### Ditambahkan
+- Log `[kinerja]` kini merinci memori per proses (jendela pulau, pengaturan, blur, GPU, dan lainnya)
+
 ## [0.4.4] 2026-10-18
 
 ### Diperbaiki
