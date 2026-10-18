@@ -41,6 +41,22 @@ Dua mode agar pembacaan tidak tertahan oleh perintah masuk.
 
 Jenis pesan: `state` (status musik), `track` (sampul), `sys` (Caps Lock dan volume). Sampul dibaca dengan empat cara berurutan (`AsStreamForRead` lewat refleksi, `AsStream`, dua varian `DataReader`) dan dicoba hingga sepuluh kali karena beberapa pemutar mengirim gambar terlambat. Setiap kegagalan dicatat di log. Bila tetap kosong, proses utama mencari sampul di iTunes Search (`art-lookup`) dan mengembalikannya sebagai data URI agar CSP tetap ketat. Proses berhenti sendiri bila proses induk hilang.
 
+### Mode notch (`appbar.js`)
+
+Windows menyediakan mekanisme *AppBar* (`SHAppBarMessage` di `shell32.dll`) yang dipakai *taskbar*. Pulau memanggilnya lewat koffi, tanpa kompilasi native:
+
+1. `ABM_NEW` mendaftarkan jendela pulau sebagai AppBar di tepi atas (`ABE_TOP`).
+2. `ABM_QUERYPOS` lalu `ABM_SETPOS` mencadangkan persegi selebar layar setinggi bilah (piksel fisik, dari `screen.dipToScreenRect`). Windows mengecilkan *work area*, jadi jendela yang dimaksimalkan mulai di bawah bilah.
+3. `hookWindowMessage` menerima `ABN_POSCHANGED` (daftar ulang posisi) dan `ABN_FULLSCREENAPP` (sembunyikan pulau saat ada aplikasi layar penuh).
+4. Pesan `TaskbarCreated` ditangkap agar AppBar didaftarkan ulang setelah Explorer dimulai ulang.
+5. `ABM_REMOVE` dipanggil saat keluar atau saat mode dimatikan.
+
+Jendela pulau dibuat selebar layar. Bilah hitam digambar di antarmuka (`#bar`), sedangkan area di luar kapsul tetap tembus klik.
+
+### Log (`logger.js`)
+
+Satu file `pulau.log`, level `off`, `errors` (WARN dan ERROR), `all` (DEBUG sampai ERROR). Sumber log: proses utama, antarmuka lewat IPC `log` serta `window.onerror`, dan PowerShell lewat pesan `{"type":"log"}` di stdout. File diputar ke `pulau.old.log` setelah 2 MB. Pengaturan menampilkan 400 baris terakhir lewat IPC `log-tail`.
+
 ### Penyimpanan (`store.js`)
 
 Satu file JSON di `app.getPath('userData')`. Nilai bawaan digabung dengan isi file sehingga kunci baru pada versi berikutnya tidak merusak data lama. Penulisan ditunda 250 ms dan atomik (tulis ke file sementara lalu ganti nama).

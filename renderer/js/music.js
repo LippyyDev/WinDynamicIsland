@@ -87,7 +87,9 @@ P.mods.music = (() => {
       if (key !== lyrKey) return;
       lyr = d ? parseLrc(d.syncedLyrics) : [];
       lyrMsg = lyr.length ? '' : 'Lirik tidak tersedia';
-    } catch (_) {
+      logA('INFO', 'lirik', lyr.length ? `Lirik ditemukan (${lyr.length} baris): ${m.title}` : 'Lirik tidak ditemukan: ' + m.title);
+    } catch (e) {
+      logA('WARN', 'lirik', 'Gagal memuat lirik: ' + (e && e.message));
       if (key !== lyrKey) return;
       lyrMsg = 'Lirik tidak tersedia';
     }
@@ -140,6 +142,7 @@ P.mods.music = (() => {
     const key = lyrKey;
     artTimer = setTimeout(async () => {
       if (art || key !== lyrKey || st.none) return;
+      logA('INFO', 'sampul', 'Windows tidak memberi sampul, mencari online: ' + m.title);
       try {
         const d = await api.artLookup(m.title, m.artist);
         if (d && !art && key === lyrKey) setArt(d);
@@ -156,7 +159,7 @@ P.mods.music = (() => {
     return '';
   }
   function media(m) {
-    if (m.type === 'track') { setArt(m.thumb); return; }
+    if (m.type === 'track') { logA('DEBUG', 'sampul', m.thumb ? 'Sampul diterima dari Windows' : 'Sampul kosong dari Windows'); setArt(m.thumb); return; }
     if (m.type !== 'state') return;
     const prevStatus = st.status;
     const key = m.none ? '' : `${m.title}|${m.artist}`;
@@ -165,7 +168,9 @@ P.mods.music = (() => {
     if (m.none || prevStatus !== m.status || Math.abs(predicted - m.pos) > 1.5 || key !== lyrKey) {
       base = { pos: m.pos || 0, t: performance.now() };
     }
+    if (prevStatus !== m.status && !m.none) logA('INFO', 'musik', 'Status: ' + m.status);
     if (key !== lyrKey) {
+      logA('INFO', 'musik', m.none ? 'Tidak ada media diputar' : `Lagu: ${m.title} · ${m.artist || '-'} (${prettyApp(m.app) || m.app || 'tidak diketahui'})`);
       lyrKey = key; curIdx = -2;
       if (!m.none) { loadLyrics(m); scheduleArtFallback(m); } else { lyr = []; lyrMsg = ''; drawLyrics(); setArt(null); clearTimeout(artTimer); }
     }

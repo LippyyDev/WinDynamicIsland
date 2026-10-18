@@ -4,40 +4,77 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const readline = require('readline');
 const { Store } = require('./store');
+const { Logger } = require('./logger');
+const { AppBar } = require('./appbar');
 
 if (!app.requestSingleInstanceLock()) { app.quit(); }
 
-const W = 820, H = 300;
-let win = null, settingsWin = null, tray = null, store = null;
+const H = 300;
+let win = null, settingsWin = null, tray = null, store = null, appbar = null;
 let ps = null, cmdPs = null, quitting = false;
 let islandRect = null, inside = false, wantCursor = false;
+let userHidden = false, fullscreenHidden = false;
+let lastSettings = null;
 
 const ICON = path.join(__dirname, 'assets', 'icon.png');
 const PRELOAD = path.join(__dirname, 'preload.js');
+const log = new Logger(app.getPath('userData'));
+
+process.on('uncaughtException', (e) => log.error('main', e));
+process.on('unhandledRejection', (e) => log.error('main', e instanceof Error ? e : 'Promise ditolak: ' + e));
 
 /* ---------------- jendela island ---------------- */
+function primaryBounds() { return screen.getPrimaryDisplay().bounds; }
+
 function place() {
   if (!win || win.isDestroyed()) return;
-  const b = screen.getPrimaryDisplay().bounds;
-  win.setBounds({ x: Math.round(b.x + (b.width - W) / 2), y: b.y, width: W, height: H });
+  const b = primaryBounds();
+  win.setBounds({ x: b.x, y: b.y, width: b.width, height: H });
 }
 
 function createWindow() {
+  const b = primaryBounds();
   win = new BrowserWindow({
-    width: W, height: H,
+    x: b.x, y: b.y, width: b.width, height: H,
     frame: false, transparent: true, resizable: false, movable: false, minimizable: false, maximizable: false,
     skipTaskbar: true, alwaysOnTop: true, hasShadow: false, show: false, backgroundColor: '#00000000',
     webPreferences: { preload: PRELOAD, contextIsolation: true, nodeIntegration: false, backgroundThrottling: false }
   });
-  place();
   win.setAlwaysOnTop(true, 'screen-saver');
   win.setVisibleOnAllWorkspaces(true);
   win.setIgnoreMouseEvents(true, { forward: true });
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
-  win.once('ready-to-show', () => win.showInactive());
-  screen.on('display-metrics-changed', place);
-  screen.on('display-added', place);
-  screen.on('display-removed', place);
+  win.once('ready-to-show', () => { win.showInactive(); applyNotch(); });
+  win.webContents.on('render-process-gone', (_e, d) => log.error('renderer', 'Proses antarmuka berhenti: ' + d.reason));
+  win.webContents.on('console-message', (_e, level, message, line, source) => {
+    if (level >= 3) log.error('renderer', `${message} (${path.basename(source || '')}:${line})`);
+  });
+  const onDisplay = () => { log.info('layar', 'Konfigurasi layar berubah'); place(); applyNotch(); };
+  screen.on('display-metrics-changed', onDisplay);
+  screen.on('display-added', onDisplay);
+  screen.on('display-removed', onDisplay);
+
+  appbar = new AppBar(win, log);
+  appbar.onPosChanged = () => applyNotch();
+  appbar.onTaskbarCreated = () => { log.info('notch', 'Explorer dimulai ulang, daftar ulang AppBar'); appbar.registered = false; applyNotch(); };
+  appbar.onFullscreen = (on) => {
+    if (!store.get('settings').hideOnFullscreen) return;
+    log.info('notch', on ? 'Aplikasi layar penuh terdeteksi, pulau disembunyikan' : 'Layar penuh selesai, pulau ditampilkan');
+    fullscreenHidden = on;
+    if (on) win.hide(); else if (!userHidden) win.showInactive();
+  };
+}
+
+/* ---------------- mode notch ---------------- */
+function applyNotch() {
+  if (!win || win.isDestroyed() || !appbar) return;
+  const s = store.get('settings');
+  if (!s.notch) { appbar.remove(); return; }
+  const d = screen.getPrimaryDisplay();
+  const b = d.bounds;
+  const barH = Math.max(20, Math.min(60, Number(s.barHeight) || 32));
+  const phys = process.platform === 'win32' ? screen.dipToScreenRect(win, { x: b.x, y: b.y, width: b.width, height: barH }) : { x: b.x, y: b.y, width: b.width, height: barH };
+  appbar.apply({ left: phys.x, top: phys.y, right: phys.x + phys.width, bottom: phys.y + phys.height }, phys.height);
 }
 
 // Posisi kursor dibaca langsung dari sistem, jadi tetap terdeteksi saat menyeret file.
@@ -58,11 +95,18 @@ function pollCursor() {
   }, 40);
 }
 
+function setVisible(v) {
+  userHidden = !v;
+  if (v && !fullscreenHidden) win.showInactive(); else win.hide();
+  log.info('tray', v ? 'Pulau ditampilkan' : 'Pulau disembunyikan');
+}
+
 /* ---------------- jendela pengaturan ---------------- */
 function openSettings() {
   if (settingsWin && !settingsWin.isDestroyed()) { settingsWin.show(); settingsWin.focus(); return; }
+  log.info('pengaturan', 'Jendela pengaturan dibuka');
   settingsWin = new BrowserWindow({
-    width: 900, height: 620, minWidth: 760, minHeight: 500,
+    width: 940, height: 660, minWidth: 780, minHeight: 520,
     title: 'Pengaturan Pulau', icon: ICON, backgroundColor: '#0c0c0f', show: false,
     autoHideMenuBar: true, titleBarStyle: 'hidden',
     titleBarOverlay: { color: '#0c0c0f', symbolColor: '#d8d8de', height: 40 },
@@ -73,79 +117,44 @@ function openSettings() {
 }
 
 /* ---------------- jembatan PowerShell ---------------- */
-const logPath = () => path.join(app.getPath('userData'), 'media.log');
-function log(m) { try { fs.appendFileSync(logPath(), `[${new Date().toLocaleTimeString()}] [main] ${m}\n`); } catch (_) {} }
 const psScript = () => app.isPackaged ? path.join(process.resourcesPath, 'media.ps1') : path.join(__dirname, 'media.ps1');
 
-function runPs(mode) {
+function runPs(mode, onMsg) {
   const p = spawn('powershell.exe',
     ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', psScript(),
-      '-Mode', mode, '-Log', logPath(), '-ParentPid', String(process.pid)],
+      '-Mode', mode, '-ParentPid', String(process.pid)],
     { windowsHide: true });
-  p.on('error', (e) => log(`spawn ${mode} gagal: ${e.message}`));
+  log.info('ps-' + mode, 'Proses PowerShell dimulai (pid ' + p.pid + ')');
+  p.on('error', (e) => log.error('ps-' + mode, 'Gagal menjalankan PowerShell: ' + e.message));
   p.stderr.setEncoding('utf8');
-  p.stderr.on('data', (d) => log(`stderr ${mode}: ${String(d).trim().slice(0, 500)}`));
+  p.stderr.on('data', (d) => log.error('ps-' + mode, String(d).trim().slice(0, 1000)));
+  p.stdout.setEncoding('utf8');
+  readline.createInterface({ input: p.stdout }).on('line', (line) => {
+    line = line.replace(/^﻿/, '').trim();
+    if (!line) return;
+    let m;
+    try { m = JSON.parse(line); } catch (_) { log.warn('ps-' + mode, 'Baris bukan JSON: ' + line.slice(0, 200)); return; }
+    if (m.type === 'log') { log.write(m.level || 'INFO', 'ps-' + mode, m.msg); return; }
+    if (onMsg) onMsg(m);
+  });
   return p;
 }
 function startMedia() {
   if (process.platform !== 'win32') return;
-  ps = runPs('watch');
-  ps.stdout.setEncoding('utf8');
-  readline.createInterface({ input: ps.stdout }).on('line', (line) => {
-    line = line.replace(/^﻿/, '').trim();
-    if (!line) return;
-    try { if (win && !win.isDestroyed()) win.webContents.send('media', JSON.parse(line)); }
-    catch (_) { log('baris bukan JSON: ' + line.slice(0, 200)); }
+  ps = runPs('watch', (m) => { if (win && !win.isDestroyed()) win.webContents.send('media', m); });
+  ps.on('exit', (c) => {
+    log[quitting ? 'info' : 'warn']('ps-watch', 'Proses berhenti, kode ' + c);
+    ps = null; if (!quitting) setTimeout(startMedia, 3000);
   });
-  ps.on('exit', (c) => { log('pembaca media berhenti, kode ' + c); ps = null; if (!quitting) setTimeout(startMedia, 3000); });
 }
 function startCmd() {
   if (process.platform !== 'win32') return;
   cmdPs = runPs('cmd');
-  cmdPs.on('exit', () => { cmdPs = null; if (!quitting) setTimeout(startCmd, 3000); });
+  cmdPs.on('exit', (c) => {
+    log[quitting ? 'info' : 'warn']('ps-cmd', 'Proses berhenti, kode ' + c);
+    cmdPs = null; if (!quitting) setTimeout(startCmd, 3000);
+  });
 }
-
-/* ---------------- IPC ---------------- */
-function broadcast(channel, ...args) {
-  for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.webContents.send(channel, ...args);
-}
-async function fileInfo(paths) {
-  const out = [];
-  for (const p of paths) {
-    try {
-      const st = fs.statSync(p);
-      let icon = '';
-      try { icon = (await app.getFileIcon(p, { size: 'large' })).toDataURL(); } catch (_) {}
-      out.push({ path: p, name: path.basename(p), icon, dir: st.isDirectory(), size: st.size, added: Date.now() });
-    } catch (_) {}
-  }
-  return out;
-}
-
-ipcMain.on('media-cmd', (_e, cmd) => { if (cmdPs && cmdPs.stdin.writable) cmdPs.stdin.write(cmd + '\n'); });
-ipcMain.on('island-rect', (_e, r) => { islandRect = r; });
-ipcMain.on('want-cursor', (_e, v) => { wantCursor = !!v; });
-ipcMain.handle('store-get', (_e, k) => store.get(k));
-ipcMain.on('store-set', (e, k, v) => {
-  store.set(k, v);
-  for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed() && w.webContents !== e.sender) w.webContents.send('store-changed', k, v);
-});
-ipcMain.on('open-settings', openSettings);
-ipcMain.handle('autostart-get', () => app.getLoginItemSettings().openAtLogin);
-ipcMain.on('autostart-set', (_e, v) => { app.setLoginItemSettings({ openAtLogin: !!v }); rebuildTray(); });
-ipcMain.handle('file-info', (_e, paths) => fileInfo(paths || []));
-ipcMain.handle('file-dialog', async () => {
-  const r = await dialog.showOpenDialog(win, { title: 'Tambah ke Rak File', properties: ['openFile', 'multiSelections'] });
-  return r.canceled ? [] : fileInfo(r.filePaths);
-});
-ipcMain.on('file-open', (_e, p) => shell.openPath(p));
-ipcMain.on('file-reveal', (_e, p) => shell.showItemInFolder(p));
-ipcMain.on('file-drag', (e, p, icon) => {
-  if (!fs.existsSync(p)) return;
-  let img = icon ? nativeImage.createFromDataURL(icon) : nativeImage.createEmpty();
-  if (img.isEmpty()) img = nativeImage.createFromPath(ICON).resize({ width: 32, height: 32 });
-  e.sender.startDrag({ file: p, icon: img });
-});
 
 /* ---------------- sampul cadangan (iTunes Search) ---------------- */
 const artCache = new Map();
@@ -175,20 +184,96 @@ async function lookupArt(title, artist) {
       const buf = Buffer.from(await ir.arrayBuffer());
       if (buf.length > 500) out = 'data:image/jpeg;base64,' + buf.toString('base64');
     }
-    log(`sampul online ${out ? 'ketemu' : 'tidak ketemu'}: ${title} | ${artist}`);
-  } catch (e) { log('sampul online gagal: ' + e.message); }
+    log.info('sampul', `Sampul online ${out ? 'ditemukan' : 'tidak ditemukan'}: ${title} | ${artist}`);
+  } catch (e) { log.warn('sampul', 'Pencarian sampul online gagal: ' + e.message); }
   clearTimeout(timer);
   if (out) { if (artCache.size > 40) artCache.delete(artCache.keys().next().value); artCache.set(key, out); }
   return out;
 }
-ipcMain.handle('art-lookup', (_e, title, artist) => (title ? lookupArt(String(title), String(artist || '')) : ''));
 
+/* ---------------- IPC ---------------- */
+function broadcast(channel, ...args) {
+  for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed()) w.webContents.send(channel, ...args);
+}
+async function fileInfo(paths) {
+  const out = [];
+  for (const p of paths) {
+    try {
+      const st = fs.statSync(p);
+      let icon = '';
+      try { icon = (await app.getFileIcon(p, { size: 'large' })).toDataURL(); } catch (_) {}
+      out.push({ path: p, name: path.basename(p), icon, dir: st.isDirectory(), size: st.size, added: Date.now() });
+    } catch (e) { log.warn('rak', 'Tidak bisa membaca file: ' + p + ' (' + e.message + ')'); }
+  }
+  return out;
+}
+function diffSettings(a, b, prefix = '') {
+  const out = [];
+  for (const k of new Set([...Object.keys(a || {}), ...Object.keys(b || {})])) {
+    const x = a ? a[k] : undefined, y = b ? b[k] : undefined;
+    if (x && y && typeof x === 'object' && typeof y === 'object') out.push(...diffSettings(x, y, prefix + k + '.'));
+    else if (JSON.stringify(x) !== JSON.stringify(y)) out.push(`${prefix}${k}: ${JSON.stringify(x)} -> ${JSON.stringify(y)}`);
+  }
+  return out;
+}
+function onSettingsChanged(next) {
+  const changes = diffSettings(lastSettings, next);
+  if (changes.length) log.info('pengaturan', 'Diubah: ' + changes.join(', '));
+  const prev = lastSettings || {};
+  lastSettings = JSON.parse(JSON.stringify(next));
+  log.setLevel(next.logLevel);
+  if (prev.notch !== next.notch || prev.barHeight !== next.barHeight) applyNotch();
+}
+
+ipcMain.on('media-cmd', (_e, cmd) => {
+  log.info('musik', 'Perintah: ' + cmd);
+  if (cmdPs && cmdPs.stdin.writable) cmdPs.stdin.write(cmd + '\n');
+  else log.warn('musik', 'Perintah tidak terkirim, proses PowerShell belum siap');
+});
+ipcMain.on('island-rect', (_e, r) => { islandRect = r; });
+ipcMain.on('want-cursor', (_e, v) => { wantCursor = !!v; });
+ipcMain.handle('store-get', (_e, k) => store.get(k));
+ipcMain.on('store-set', (e, k, v) => {
+  store.set(k, v);
+  if (k === 'settings') onSettingsChanged(v);
+  for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed() && w.webContents !== e.sender) w.webContents.send('store-changed', k, v);
+});
+ipcMain.on('open-settings', openSettings);
+ipcMain.handle('autostart-get', () => app.getLoginItemSettings().openAtLogin);
+ipcMain.on('autostart-set', (_e, v) => { app.setLoginItemSettings({ openAtLogin: !!v }); log.info('pengaturan', 'Autostart: ' + !!v); rebuildTray(); });
+ipcMain.handle('file-info', (_e, paths) => fileInfo(paths || []));
+ipcMain.handle('file-dialog', async () => {
+  const r = await dialog.showOpenDialog(win, { title: 'Tambah ke Rak File', properties: ['openFile', 'multiSelections'] });
+  return r.canceled ? [] : fileInfo(r.filePaths);
+});
+ipcMain.on('file-open', async (_e, p) => {
+  const err = await shell.openPath(p);
+  if (err) log.warn('rak', `Gagal membuka ${p}: ${err}`); else log.info('rak', 'Membuka ' + p);
+});
+ipcMain.on('file-reveal', (_e, p) => { shell.showItemInFolder(p); log.info('rak', 'Tampilkan di folder: ' + p); });
+ipcMain.on('file-drag', (e, p, icon) => {
+  if (!fs.existsSync(p)) { log.warn('rak', 'File untuk diseret tidak ada: ' + p); return; }
+  let img = icon ? nativeImage.createFromDataURL(icon) : nativeImage.createEmpty();
+  if (img.isEmpty()) img = nativeImage.createFromPath(ICON).resize({ width: 32, height: 32 });
+  e.sender.startDrag({ file: p, icon: img });
+  log.info('rak', 'Seret keluar: ' + p);
+});
+ipcMain.handle('art-lookup', (_e, title, artist) => (title ? lookupArt(String(title), String(artist || '')) : ''));
 ipcMain.on('data-folder', () => shell.openPath(app.getPath('userData')));
 ipcMain.on('data-reset', () => {
+  log.warn('data', 'Semua data dihapus oleh pengguna');
   store.reset();
   for (const k of Object.keys(store.get())) broadcast('store-changed', k, store.get(k));
+  onSettingsChanged(store.get('settings'));
 });
 ipcMain.handle('version', () => app.getVersion());
+
+// log
+ipcMain.on('log', (_e, level, src, msg) => log.write(String(level || 'INFO').toUpperCase(), src, msg));
+ipcMain.handle('log-tail', (_e, n) => log.tail(Number(n) || 300));
+ipcMain.handle('log-size', () => log.size());
+ipcMain.on('log-clear', () => { log.clear(); log.info('log', 'Log dikosongkan'); });
+ipcMain.on('log-open', () => { if (!fs.existsSync(log.file)) fs.writeFileSync(log.file, ''); shell.openPath(log.file); });
 
 /* ---------------- tray ---------------- */
 function rebuildTray() {
@@ -197,15 +282,12 @@ function rebuildTray() {
     { label: 'Pulau ' + app.getVersion(), enabled: false },
     { type: 'separator' },
     { label: 'Pengaturan…', click: openSettings },
-    {
-      label: 'Tampilkan pulau', type: 'checkbox', checked: !!win && win.isVisible(),
-      click: (i) => { i.checked ? win.showInactive() : win.hide(); }
-    },
+    { label: 'Tampilkan pulau', type: 'checkbox', checked: !userHidden, click: (i) => setVisible(i.checked) },
     {
       label: 'Jalankan saat Windows mulai', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin,
-      click: (i) => app.setLoginItemSettings({ openAtLogin: i.checked })
+      click: (i) => { app.setLoginItemSettings({ openAtLogin: i.checked }); log.info('tray', 'Autostart: ' + i.checked); }
     },
-    { label: 'Buka log media', click: () => shell.openPath(logPath()) },
+    { label: 'Buka log', click: () => { if (!fs.existsSync(log.file)) fs.writeFileSync(log.file, ''); shell.openPath(log.file); } },
     { type: 'separator' },
     { label: 'Keluar', click: () => { quitting = true; app.quit(); } }
   ]));
@@ -222,8 +304,15 @@ app.on('second-instance', openSettings);
 
 app.whenReady().then(() => {
   store = new Store(app.getPath('userData'));
+  lastSettings = JSON.parse(JSON.stringify(store.get('settings')));
+  log.setLevel(lastSettings.logLevel);
+  log.info('app', `Pulau ${app.getVersion()} dimulai (Electron ${process.versions.electron}, Windows ${process.getSystemVersion ? process.getSystemVersion() : ''})`);
+
   // buang file rak yang sudah tidak ada
-  store.set('shelf', (store.get('shelf') || []).filter((f) => { try { return fs.existsSync(f.path); } catch (_) { return false; } }));
+  const shelf = store.get('shelf') || [];
+  const kept = shelf.filter((f) => { try { return fs.existsSync(f.path); } catch (_) { return false; } });
+  if (kept.length !== shelf.length) log.info('rak', `${shelf.length - kept.length} file di rak sudah tidak ada dan dibuang`);
+  store.set('shelf', kept);
 
   session.defaultSession.setPermissionCheckHandler(() => true);
   session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(true));
@@ -241,6 +330,8 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   quitting = true;
+  log.info('app', 'Pulau ditutup');
+  if (appbar) appbar.remove();
   if (store) store.flush();
   for (const p of [ps, cmdPs]) if (p) { try { p.stdin.end(); p.kill(); } catch (_) {} }
 });

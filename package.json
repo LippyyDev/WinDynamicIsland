@@ -1,7 +1,7 @@
 {
   "name": "pulau",
   "productName": "Pulau",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Dynamic Island untuk Windows",
   "author": "LIP (Muhammad Alif Qadri)",
   "main": "main.js",
@@ -16,8 +16,13 @@
       "main.js",
       "preload.js",
       "store.js",
+      "logger.js",
+      "appbar.js",
       "renderer/**",
-      "assets/**"
+      "assets/**",
+      "!node_modules/koffi/build/koffi/!(win32_x64)/**",
+      "!node_modules/koffi/src/**",
+      "!node_modules/koffi/doc/**"
     ],
     "extraResources": [
       {
@@ -38,7 +43,10 @@
       "runAfterFinish": true,
       "shortcutName": "Pulau"
     },
-    "publish": null
+    "publish": null,
+    "asarUnpack": [
+      "node_modules/koffi/**"
+    ]
   },
   "devDependencies": {
     "@fontsource/plus-jakarta-sans": "^5.3.0",
@@ -50,5 +58,8 @@
     "url": "git+https://github.com/LippyyDev/WinDynamicIsland.git"
   },
   "homepage": "https://github.com/LippyyDev/WinDynamicIsland",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "koffi": "^2.16.3"
+  }
 }

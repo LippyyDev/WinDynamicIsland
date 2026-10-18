@@ -3,7 +3,9 @@ body {
   background: #0c0c0f; color: var(--txt); font-family: var(--font); font-size: 13.5px;
   display: grid; grid-template-columns: 236px 1fr; overflow: hidden; -webkit-font-smoothing: antialiased;
 }
-.titlebar { position: fixed; top: 0; left: 0; right: 0; height: 40px; -webkit-app-region: drag; z-index: 5; display: flex; align-items: center; padding-left: 252px; }
+.titlebar { position: fixed; top: 0; left: 236px; right: 0; height: 40px; -webkit-app-region: drag; z-index: 5; display: flex; align-items: center; padding-left: 16px; background: #0c0c0f; }
+.side { -webkit-app-region: drag; }
+.side nav, .side .brand { -webkit-app-region: no-drag; }
 .titlebar span { font-size: 12px; color: var(--txt3); font-weight: 600; }
 
 .side { background: #111116; border-right: 1px solid var(--line); padding: 54px 14px 18px; display: flex; flex-direction: column; }
@@ -53,5 +55,18 @@ label.row { cursor: pointer; }
 .btn.danger { color: #ff8a98; border-color: rgba(255, 84, 104, .35); }
 .btn.danger:hover { background: rgba(255, 84, 104, .14); }
 
+.sel { height: 34px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .12); background: #1d1d25; color: #fff; padding: 0 10px; font-weight: 600; outline: none; flex: none; cursor: pointer; }
+.sel:focus { border-color: var(--blue); }
+.btns { display: flex; gap: 8px; flex: none; }
+.btn.sm { height: 28px; padding: 0 12px; font-size: 12px; }
+.logbox { margin-top: 12px; background: #0a0a0d; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.logbar { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.logbar b { font-size: 12.5px; margin-right: auto; }
+.mini { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--txt2); cursor: pointer; }
+.mini input { accent-color: var(--green); }
+#logView { margin: 0; padding: 12px 14px; height: 300px; overflow: auto; font: 11.5px/1.55 "Cascadia Mono", Consolas, monospace; color: #c9c9d2; white-space: pre-wrap; word-break: break-word; user-select: text; }
+#logView .e { color: #ff8a98; }
+#logView .w { color: #ffc874; }
+#logView .d { color: #6c6c76; }
 .toast { position: fixed; bottom: 22px; left: calc(50% + 118px); transform: translate(-50%, 20px); background: #f2f2f5; color: #111; font-weight: 700; font-size: 12.5px; padding: 8px 16px; border-radius: 20px; opacity: 0; transition: opacity .2s, transform .3s cubic-bezier(.2, 1.2, .36, 1); pointer-events: none; }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }

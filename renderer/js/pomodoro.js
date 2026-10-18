@@ -16,13 +16,14 @@ P.mods.pomodoro = (() => {
     if (s.phase === 'focus') return `${LABEL.focus} · sesi ${(s.count % P.S.pomo.every) + 1} dari ${P.S.pomo.every}`;
     return LABEL[s.phase];
   }
-  function start() { const s = ps(); s.endAt = Date.now() + remaining() * 1000; s.running = true; save('pomo'); paint(); render(); }
-  function pause() { const s = ps(); s.remaining = remaining(); s.running = false; save('pomo'); paint(); render(); }
-  function reset() { const s = ps(); s.running = false; s.remaining = dur(s.phase); save('pomo'); paint(); render(); }
-  function setPhase(ph) { const s = ps(); s.phase = ph; s.running = false; s.remaining = dur(ph); save('pomo'); paint(); render(); }
+  function start() { logA('INFO', 'pomodoro', `Mulai ${ps().phase}, sisa ${fmt(remaining())}`); const s = ps(); s.endAt = Date.now() + remaining() * 1000; s.running = true; save('pomo'); paint(); render(); }
+  function pause() { logA('INFO', 'pomodoro', `Jeda, sisa ${fmt(remaining())}`); const s = ps(); s.remaining = remaining(); s.running = false; save('pomo'); paint(); render(); }
+  function reset() { logA('INFO', 'pomodoro', 'Ulang'); const s = ps(); s.running = false; s.remaining = dur(s.phase); save('pomo'); paint(); render(); }
+  function setPhase(ph) { logA('INFO', 'pomodoro', 'Ganti fase ke ' + ph); const s = ps(); s.phase = ph; s.running = false; s.remaining = dur(ph); save('pomo'); paint(); render(); }
 
   function finish() {
     const s = ps();
+    logA('INFO', 'pomodoro', 'Fase selesai: ' + s.phase);
     let next;
     if (s.phase === 'focus') {
       s.count++;

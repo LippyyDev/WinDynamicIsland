@@ -26,6 +26,12 @@ contextBridge.exposeInMainWorld('pulau', {
   dragFile: (p, icon) => ipcRenderer.send('file-drag', p, icon),
   pathForFile: (f) => { try { return webUtils.getPathForFile(f); } catch (_) { return ''; } },
 
+  log: (level, src, msg) => ipcRenderer.send('log', level, src, msg),
+  logTail: (n) => ipcRenderer.invoke('log-tail', n),
+  logSize: () => ipcRenderer.invoke('log-size'),
+  logClear: () => ipcRenderer.send('log-clear'),
+  logOpen: () => ipcRenderer.send('log-open'),
+
   dataFolder: () => ipcRenderer.send('data-folder'),
   dataReset: () => ipcRenderer.send('data-reset'),
   version: () => ipcRenderer.invoke('version')

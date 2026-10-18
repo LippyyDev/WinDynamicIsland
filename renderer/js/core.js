@@ -18,6 +18,9 @@ const P = {
 };
 
 const save = (key) => api.set(key, P.data[key]);
+const logA = (level, src, msg) => { try { if (api.log) api.log(level, src, String(msg)); } catch (_) {} };
+window.addEventListener('error', (e) => logA('ERROR', 'antarmuka', `${e.message} (${(e.filename || '').split('/').pop()}:${e.lineno})`));
+window.addEventListener('unhandledrejection', (e) => logA('ERROR', 'antarmuka', 'Promise ditolak: ' + (e.reason && (e.reason.stack || e.reason.message) || e.reason)));
 const fmt = (s) => {
   s = Math.max(0, Math.round(s || 0));
   return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
@@ -75,6 +78,7 @@ function notify(a) {
     const i = P.alertQ.findIndex((x) => x.id === a.id);
     if (i >= 0) { P.alertQ[i] = a; return; }
   }
+  logA(a.id === 'vol' || a.id === 'caps' ? 'DEBUG' : 'INFO', 'notifikasi', a.title + (a.sub ? ': ' + a.sub : ''));
   P.alertQ.push(a);
   if (!P.alert) nextAlert();
 }
@@ -155,10 +159,15 @@ function render() {
   island.dataset.eyes = mode === 'idle' && P.eyes ? '1' : '0';
   island.classList.toggle('al-small', mode === 'alert' && (P.alert.h || 64) < 56);
 
-  let w = 150, h = 32;
+  const notch = !!P.S.notch;
+  const barH = Math.max(20, Math.min(60, Number(P.S.barHeight) || 32));
+  document.body.classList.toggle('notch', notch);
+  document.body.classList.toggle('bar-black', notch && P.S.notchBlack !== false);
+  document.documentElement.style.setProperty('--barh', barH + 'px');
+  let w = 150, h = notch ? barH : 32;
   if (mode === 'expanded') { w = P.mods[P.page].width(); h = 190; }
-  else if (mode === 'alert') { w = P.alert.w || 380; h = P.alert.h || 64; }
-  else if (mode === 'compact') { w = P.compactW; h = 38; }
+  else if (mode === 'alert') { w = P.alert.w || 380; h = Math.max(P.alert.h || 64, notch ? barH : 0); }
+  else if (mode === 'compact') { w = P.compactW; h = notch ? barH : 38; }
   else if (P.eyes) { w = 124; }
   island.style.width = w + 'px';
   island.style.height = h + 'px';
@@ -188,6 +197,7 @@ function render() {
 function go(page) {
   if (page === P.page) return;
   P.page = page;
+  logA('DEBUG', 'pulau', 'Pindah ke halaman ' + page);
   render();
   P.mods[page].onShow && P.mods[page].onShow();
 }
@@ -206,6 +216,7 @@ function openIsland(page) {
   else if (island.dataset.mode === 'compact') P.page = P.mods.music.hasTrack() ? 'music' : 'pomodoro';
   if (P.alert) dismissAlert();
   P.hover = true; P.lastActive = Date.now();
+  logA('DEBUG', 'pulau', 'Dibuka, halaman ' + P.page);
   render();
   P.mods[P.page].onShow && P.mods[P.page].onShow();
 }

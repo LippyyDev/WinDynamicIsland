@@ -20,13 +20,15 @@ P.mods.todo = (() => {
     T().push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), text, due: due || '', done: false,
       created: Date.now(), doneDay: '', notified: due && due <= now ? dayKey() : '' });
     save('todos'); paint();
+    logA('INFO', 'tugas', 'Tugas baru: ' + text + (due ? ' (pengingat ' + due + ')' : ''));
   }
   function toggle(id) {
     const t = T().find((x) => x.id === id); if (!t) return;
     t.done = !t.done; t.doneDay = t.done ? dayKey() : '';
+    logA('INFO', 'tugas', (t.done ? 'Selesai: ' : 'Batal selesai: ') + t.text);
     save('todos'); paint();
   }
-  function del(id) { P.data.todos = T().filter((x) => x.id !== id); save('todos'); paint(); }
+  function del(id) { const t0 = T().find((x) => x.id === id); if (t0) logA('INFO', 'tugas', 'Dihapus: ' + t0.text); P.data.todos = T().filter((x) => x.id !== id); save('todos'); paint(); }
   function edit(id, el) {
     const t = T().find((x) => x.id === id); if (!t) return;
     const inp = document.createElement('input');

@@ -2,6 +2,21 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.3.0] 2026-10-18
+
+### Ditambahkan
+- Mode *notch*: Pulau didaftarkan sebagai *AppBar* Windows sehingga area atas layar dicadangkan dan jendela yang dimaksimalkan tidak lagi tertutup
+- Bilah atas hitam penuh seperti MacBook (dapat dimatikan), tinggi bilah dapat diatur
+- Pulau otomatis disembunyikan saat aplikasi layar penuh (video, game, presentasi)
+- Log aktivitas dengan tiga level (Mati, Hanya galat, Semua aktivitas), rotasi otomatis 2 MB
+- Penampil log di Pengaturan, bagian Data, dengan filter galat dan tombol kosongkan
+- Pencatatan galat antarmuka, proses utama, dan PowerShell di satu file `pulau.log`
+
+### Diubah
+- Log PowerShell dikirim lewat stdout ke proses utama, tidak lagi menulis file sendiri
+- `media.log` digantikan `pulau.log`
+- Jendela pulau kini selebar layar agar bilah notch bisa digambar
+
 ## [0.2.1] 2026-10-18
 
 ### Diperbaiki

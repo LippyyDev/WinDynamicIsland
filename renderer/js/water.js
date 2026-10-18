@@ -23,6 +23,7 @@ P.mods.water = (() => {
     (W().undo ||= []).push({ d: dayKey(), h, ml: Number(cfg().cup) });
     W().undo = W().undo.slice(-20);
     prune(); save('water'); paint();
+    logA('INFO', 'minum', `Minum ${cfg().cup} ml, total hari ini ${total()} ml`);
     const g = Number(cfg().goal);
     if (before < g && total() >= g) {
       notify({ title: 'Target minum tercapai', sub: `${nf.format(total() / 1000)} L hari ini, mantap`, icon: ringIcon(1, 'var(--blue)', G.check), page: 'water', sound: 'done', w: 360 });
@@ -32,6 +33,7 @@ P.mods.water = (() => {
     const u = (W().undo || []).pop();
     if (!u || !W().log[u.d]) return;
     W().log[u.d][u.h] = Math.max(0, (W().log[u.d][u.h] || 0) - u.ml);
+    logA('INFO', 'minum', `Batal minum ${u.ml} ml`);
     save('water'); paint();
   }
 
@@ -78,7 +80,7 @@ P.mods.water = (() => {
     init() {
       $('#wDrink').onclick = drink;
       $('#wUndo').onclick = undo;
-      $('#wRemind').onclick = () => { cfg().remind = !cfg().remind; save('settings'); paint(); };
+      $('#wRemind').onclick = () => { cfg().remind = !cfg().remind; logA('INFO', 'minum', 'Pengingat ' + (cfg().remind ? 'aktif' : 'mati')); save('settings'); paint(); };
       setInterval(remindTick, 30000);
       setInterval(() => { if (P.page === 'water' && island.dataset.mode === 'expanded') paint(); }, 60000);
       paint();

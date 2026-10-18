@@ -9,6 +9,13 @@ html, body {
   user-select: none; -webkit-font-smoothing: antialiased;
 }
 
+/* ================= bilah notch ================= */
+#bar { position: absolute; left: 0; right: 0; top: 0; height: var(--barh, 32px); background: #000; display: none; pointer-events: none; }
+body.bar-black #bar { display: block; }
+body.bar-black #island::before, body.bar-black #island::after { display: none; }
+body.bar-black #island[data-mode="idle"] .body, body.bar-black #island[data-mode="compact"] .body { box-shadow: none; }
+body.notch .c-left .art { width: min(26px, calc(var(--barh) - 6px)); height: min(26px, calc(var(--barh) - 6px)); }
+
 /* ================= shell ================= */
 #island {
   position: absolute; left: 50%; top: 0; transform: translateX(-50%);

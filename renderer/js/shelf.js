@@ -10,13 +10,14 @@ P.mods.shelf = (() => {
     if (!items || !items.length) return;
     const list = P.data.shelf.filter((f) => !items.some((n) => n.path === f.path));
     P.data.shelf = [...items, ...list].slice(0, 40);
+    logA('INFO', 'rak', 'Ditambahkan: ' + items.map((f) => f.name).join(', '));
     save('shelf'); paint();
   }
   async function addPaths(paths) {
     paths = paths.filter(Boolean);
     if (paths.length) add(await api.fileInfo(paths));
   }
-  function remove(p) { P.data.shelf = P.data.shelf.filter((f) => f.path !== p); save('shelf'); paint(); }
+  function remove(p) { logA('INFO', 'rak', 'Dihapus dari rak: ' + p); P.data.shelf = P.data.shelf.filter((f) => f.path !== p); save('shelf'); paint(); }
 
   function paint() {
     const files = P.data.shelf || [];
@@ -51,7 +52,7 @@ P.mods.shelf = (() => {
     init() {
       $('#drop').onclick = async () => add(await api.fileDialog());
       $('#shAdd').onclick = async () => add(await api.fileDialog());
-      $('#shClear').onclick = () => { P.data.shelf = []; save('shelf'); paint(); };
+      $('#shClear').onclick = () => { logA('INFO', 'rak', 'Rak dikosongkan'); P.data.shelf = []; save('shelf'); paint(); };
       document.addEventListener('dragenter', (e) => {
         if (!hasFiles(e) || Date.now() - internalDrag < 3000) return;
         e.preventDefault();

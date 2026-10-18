@@ -2,7 +2,12 @@
 
 Urutan menunjukkan prioritas, bukan janji tanggal.
 
-## Segera (0.3)
+## Selesai di 0.3
+
+- [x] Mode *notch* (AppBar) dan sembunyi saat layar penuh
+- [x] Log aktivitas dengan penampil
+
+## Segera (0.4)
 
 - [ ] Verifikasi pembacaan musik, sampul, volume, dan Caps Lock di berbagai perangkat Windows
 - [ ] Notifikasi untuk unduhan selesai

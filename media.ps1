@@ -1,13 +1,17 @@
 # Pulau: jembatan ke Windows.
 #   -Mode watch : kirim status media + sistem (Caps Lock, volume) sebagai JSON per baris
 #   -Mode cmd   : baca perintah dari stdin (toggle | next | prev | seek <detik>)
-param([string]$Mode = 'watch', [string]$Log = '', [int]$ParentPid = 0)
+param([string]$Mode = 'watch', [int]$ParentPid = 0)
 
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 
-function LogMsg($m) {
-  if ($Log) { try { Add-Content -LiteralPath $Log -Value ("[{0}] [{1}] {2}" -f (Get-Date -Format 'HH:mm:ss'), $Mode, $m) } catch {} }
+# Log dikirim ke proses utama lewat stdout, lalu disaring sesuai level di Pengaturan.
+function LogMsg($m, [string]$Level = 'INFO') {
+  try {
+    [Console]::Out.WriteLine((@{ type = 'log'; level = $Level; msg = "$m" } | ConvertTo-Json -Compress))
+    [Console]::Out.Flush()
+  } catch {}
 }
 
 try {
@@ -18,7 +22,7 @@ try {
   $null = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager, Windows.Media.Control, ContentType = WindowsRuntime]
   $null = [Windows.Storage.Streams.IRandomAccessStreamWithContentType, Windows.Storage.Streams, ContentType = WindowsRuntime]
   $null = [Windows.Storage.Streams.DataReader, Windows.Storage.Streams, ContentType = WindowsRuntime]
-} catch { LogMsg "init gagal: $_"; exit 1 }
+} catch { LogMsg "init gagal: $_" "ERROR"; exit 1 }
 
 function Await($op, [Type]$t) {
   $task = $asTask.MakeGenericMethod($t).Invoke($null, @($op))
@@ -29,7 +33,7 @@ function Await($op, [Type]$t) {
 try {
   $mgr = Await ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager])
   LogMsg "manager siap"
-} catch { LogMsg "RequestAsync gagal: $_"; exit 1 }
+} catch { LogMsg "RequestAsync gagal: $_" "ERROR"; exit 1 }
 
 # ---------------- mode perintah ----------------
 if ($Mode -eq 'cmd') {
@@ -49,7 +53,7 @@ if ($Mode -eq 'cmd') {
           $null = Await ($s.TryChangePlaybackPositionAsync($ticks)) ([bool])
         }
       }
-    } catch { LogMsg "perintah '$line' gagal: $_" }
+    } catch { LogMsg "perintah '$line' gagal: $_" "WARN" }
   }
 }
 
@@ -93,7 +97,7 @@ public static class PulauAudio {
 }
 '@
   $audioOk = $true
-} catch { LogMsg "audio tidak tersedia: $_" }
+} catch { LogMsg "audio tidak tersedia: $_" "WARN" }
 
 # ---------------- mode watch ----------------
 function Send($obj) {
@@ -200,6 +204,7 @@ while ($true) {
       $lastSys = $sys
       $v = -1; $mute = $false
       if ($vol) { $mute = $vol.EndsWith('m'); $v = [int]($vol.TrimEnd('m')) }
+      LogMsg "sistem: capslock=$([Console]::CapsLock) volume=$vol" "DEBUG"
       Send @{ type = 'sys'; caps = [Console]::CapsLock; vol = $v; mute = $mute }
     }
   } catch {}
@@ -238,7 +243,10 @@ while ($true) {
             Send @{ type = 'track'; key = $key; thumb = $thumb }
           } else {
             if ($thumbTries -eq 9) { Send @{ type = 'track'; key = $key; thumb = $null } }
-            if ($thumbTries -eq 9 -or $thumbTries -eq 0) { LogMsg ('thumbnail: ' + $script:thumbNote) }
+            if ($thumbTries -eq 9 -or $thumbTries -eq 0) {
+              $lv = 'INFO'; if ($script:thumbNote -like 'gagal*') { $lv = 'WARN' }
+              LogMsg ('thumbnail: ' + $script:thumbNote) $lv
+            }
           }
         }
         if (-not $title) {
@@ -255,7 +263,7 @@ while ($true) {
       $errCount = 0
     } catch {
       $errCount++
-      if ($errCount -le 5) { LogMsg "loop error: $_" }
+      if ($errCount -le 5) { LogMsg "loop error: $_" "WARN" }
     }
   }
   Start-Sleep -Milliseconds 200

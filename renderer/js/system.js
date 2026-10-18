@@ -51,7 +51,7 @@ P.mods.system = (() => {
         for (const [id, label] of devs) if (!now.has(id)) announce(label, false);
       }
       devs = now;
-    } catch (_) {}
+    } catch (e) { logA('WARN', 'sistem', 'Gagal membaca perangkat audio: ' + (e && e.message)); }
   }
   function announce(label, on) {
     const name = cleanLabel(label);

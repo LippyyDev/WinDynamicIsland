@@ -17,6 +17,8 @@
 | Daftar Tugas | Tugas harian dengan pengingat jam. Klik dua kali untuk mengubah teks. |
 | Notifikasi sistem | Pengisi daya, baterai lemah, *headphone* atau *speaker* terhubung, Caps Lock, volume. |
 | Mata saat diam | Setelah beberapa saat tanpa aktivitas, jam berganti sepasang mata yang mengikuti kursor. |
+| Mode *notch* | Area atas layar dicadangkan seperti *notch* MacBook, jadi jendela yang dimaksimalkan tidak tertutup pulau. Bilah hitam penuh, tinggi bilah dapat diatur, pulau otomatis sembunyi saat layar penuh. |
+| Log aktivitas | Tiga level: Mati, Hanya galat, Semua aktivitas. Ada penampil log di Pengaturan. |
 | Pengaturan | Jendela khusus untuk semua opsi, termasuk menyalakan atau mematikan tiap halaman. |
 
 Dokumen kebutuhan produk ada di [docs/PRD.md](docs/PRD.md), rancangan teknis di [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -25,6 +27,7 @@ Dokumen kebutuhan produk ada di [docs/PRD.md](docs/PRD.md), rancangan teknis di 
 
 Gambar di bawah dibuat dengan data contoh.
 
+![Mode notch](docs/screenshots/notch.png)
 ![Musik dan lirik](docs/screenshots/musik.png)
 ![Pomodoro](docs/screenshots/pomodoro.png)
 ![Minum Air](docs/screenshots/minum.png)
@@ -67,6 +70,8 @@ Di Linux atau macOS, antarmuka tetap bisa dibuka untuk pengerjaan tampilan, teta
 main.js          proses utama Electron: jendela, tray, IPC, jembatan PowerShell
 preload.js       API aman yang diekspos ke antarmuka
 store.js         penyimpanan lokal (satu file JSON)
+logger.js        pencatat aktivitas dan galat
+appbar.js        mode notch lewat AppBar Windows (koffi + shell32)
 media.ps1        pembaca media, volume, dan Caps Lock Windows
 renderer/        antarmuka pulau dan jendela pengaturan
   js/            modul per fitur (music, pomodoro, water, shelf, todo, system)
@@ -76,13 +81,16 @@ docs/            PRD, arsitektur, roadmap
 ## Data dan privasi
 
 * Pengaturan, tugas, catatan minum, dan isi rak file disimpan di `%APPDATA%\Pulau\pulau-data.json`.
+* Log disimpan di `%APPDATA%\Pulau\pulau.log` dan tidak pernah dikirim ke mana pun. Pada level Semua aktivitas, log memuat judul lagu dan teks tugas.
 * Tidak ada akun, analitik, atau pelacakan.
 * Permintaan jaringan hanya dua: pencarian lirik ke LRCLIB (judul, nama artis, nama album, durasi) dan, bila Windows tidak menyediakan sampul, pencarian sampul ke iTunes Search (judul dan nama artis). Pencarian sampul dapat dimatikan di Pengaturan, bagian Musik.
 
 ## Pemecahan masalah
 
-* **Kapsul hanya menampilkan jam padahal musik diputar:** klik kanan ikon *tray*, pilih **Buka log media**, lalu lampirkan isinya pada *issue*.
-* **Sampul album tidak tampil:** buka **Buka log media**. Baris `thumbnail:` menjelaskan apakah pemutar tidak mengirim gambar atau gambar gagal dibaca. Pastikan juga **Cari sampul secara online** aktif di Pengaturan.
+* **Kapsul hanya menampilkan jam padahal musik diputar:** buka Pengaturan, bagian Data, ubah **Catat ke log** menjadi **Semua aktivitas**, ulangi masalahnya, lalu lampirkan isi log pada *issue*.
+* **Jendela masih tertutup pulau:** pastikan **Potong layar seperti notch** aktif. Jendela yang sudah terbuka mungkin perlu dimaksimalkan ulang. Bila log berisi `AppBar tidak tersedia`, laporkan sebagai *issue*.
+* **Area atas tetap kosong setelah Pulau ditutup paksa:** Windows biasanya memulihkannya sendiri. Bila tidak, buka lalu tutup Pulau dari menu *tray*, atau mulai ulang Explorer.
+* **Sampul album tidak tampil:** buka log. Baris `thumbnail:` menjelaskan apakah pemutar tidak mengirim gambar atau gambar gagal dibaca. Pastikan juga **Cari sampul secara online** aktif di Pengaturan.
 * **Pengingat atau notifikasi tidak muncul:** periksa pengaturan **Notifikasi**.
 * **Peringatan SmartScreen:** lihat bagian Instalasi.
 
@@ -91,7 +99,8 @@ docs/            PRD, arsitektur, roadmap
 * Timer pada aplikasi Clock bawaan Windows tidak bisa dibaca aplikasi lain. Gunakan Pomodoro di Pulau.
 * Persentase baterai *headphone* tidak tersedia, hanya status terhubung atau terputus.
 * Kecerahan layar dan Wi-Fi belum didukung. Lihat [docs/ROADMAP.md](docs/ROADMAP.md).
-* Pulau hanya tampil di monitor utama dan tidak bisa digeser.
+* Pulau dan bilah notch hanya tampil di monitor utama.
+* Saat mode *notch* aktif, bilah memakan seluruh lebar layar setinggi bilah, sama seperti bilah menu MacBook.
 
 ## Kontribusi
 

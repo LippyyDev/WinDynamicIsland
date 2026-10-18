@@ -36,6 +36,13 @@
       <label class="row"><div><b>Muncul mata setelah</b><span>Lama tidak ada aktivitas, dalam detik.</span></div><span class="num"><input type="number" data-k="eyesAfter" min="5" max="600" step="5"><em>detik</em></span></label>
       <label class="row"><div><b>Jeda sebelum terbuka</b><span>Waktu tunggu saat kursor diarahkan ke pulau.</span></div><span class="num"><input type="number" data-k="hoverDelay" min="0" max="1500" step="20"><em>ms</em></span></label>
     </div>
+    <h2>Mode notch</h2>
+    <div class="card">
+      <label class="row"><div><b>Potong layar seperti notch</b><span>Area atas layar dicadangkan untuk pulau. Jendela yang dimaksimalkan akan mulai di bawahnya, jadi pulau tidak menutupi tab browser atau menu aplikasi.</span></div><input type="checkbox" class="sw" data-k="notch"></label>
+      <label class="row"><div><b>Bilah atas hitam penuh</b><span>Sisi kiri dan kanan pulau diisi hitam seperti bilah menu MacBook. Matikan untuk melihat wallpaper.</span></div><input type="checkbox" class="sw" data-k="notchBlack"></label>
+      <label class="row"><div><b>Tinggi bilah</b><span>Juga menjadi tinggi pulau saat tertutup.</span></div><span class="num"><input type="number" data-k="barHeight" min="24" max="48" step="2"><em>px</em></span></label>
+      <label class="row"><div><b>Sembunyikan saat layar penuh</b><span>Pulau hilang saat video, game, atau presentasi dibuka layar penuh. Hanya bekerja di mode notch.</span></div><input type="checkbox" class="sw" data-k="hideOnFullscreen"></label>
+    </div>
     <h2>Halaman</h2>
     <div class="card">
       <label class="row"><div><b>Musik</b><span>Kontrol pemutar dan lirik.</span></div><input type="checkbox" class="sw" data-k="pages.music"></label>
@@ -106,8 +113,24 @@
     <h1>Data</h1>
     <p class="lead">Pulau tidak memakai akun atau server. Pengaturan, tugas, catatan minum, dan isi rak file disimpan sebagai satu file di folder aplikasi pada PC ini. Rak file hanya menyimpan lokasi file, bukan salinannya.</p>
     <div class="card">
-      <div class="row"><div><b>Folder data</b><span>Berisi pulau-data.json dan media.log.</span></div><button class="btn" id="openData">Buka folder</button></div>
+      <div class="row"><div><b>Folder data</b><span>Berisi pulau-data.json dan pulau.log.</span></div><button class="btn" id="openData">Buka folder</button></div>
       <div class="row"><div><b>Hapus semua data</b><span>Mengembalikan pengaturan awal dan menghapus tugas, catatan minum, serta rak file.</span></div><button class="btn danger" id="resetData">Hapus</button></div>
+    </div>
+    <h2>Log aktivitas</h2>
+    <div class="card">
+      <label class="row"><div><b>Catat ke log</b><span>Mati: tidak ada yang dicatat. Hanya galat: peringatan dan galat saja. Semua aktivitas: lagu, perintah, timer, minum, tugas, rak, notifikasi, perubahan pengaturan, dan galat.</span></div>
+        <select class="sel" data-k="logLevel"><option value="off">Mati</option><option value="errors">Hanya galat</option><option value="all">Semua aktivitas</option></select></label>
+      <div class="row"><div><b>File log</b><span id="logInfo">pulau.log di folder data. Diputar otomatis setelah 2 MB.</span></div>
+        <div class="btns"><button class="btn" id="logOpen">Buka</button><button class="btn" id="logClear">Kosongkan</button></div></div>
+    </div>
+    <div class="logbox">
+      <div class="logbar">
+        <b>Isi log terbaru</b>
+        <label class="mini"><input type="checkbox" id="logErrOnly"> Hanya galat</label>
+        <label class="mini"><input type="checkbox" id="logFollow" checked> Ikuti</label>
+        <button class="btn sm" id="logRefresh">Muat ulang</button>
+      </div>
+      <pre id="logView">Memuat…</pre>
     </div>
     <h2>Tentang</h2>
     <div class="card">

@@ -30,6 +30,8 @@ function bind() {
     const k = el.dataset.k;
     if (el.type === 'checkbox') {
       el.addEventListener('change', () => { setP(S, k, el.checked); api.set('settings', S); toast(); });
+    } else if (el.tagName === 'SELECT') {
+      el.addEventListener('change', () => { setP(S, k, el.value); api.set('settings', S); toast(); setTimeout(refreshLog, 300); });
     } else {
       el.addEventListener('change', () => {
         let v = Number(el.value);
@@ -61,6 +63,31 @@ $('#nav').addEventListener('click', (e) => {
 });
 
 $('#openData').onclick = () => api.dataFolder();
+
+/* ---------- penampil log ---------- */
+const escH = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+const fmtSize = (b) => (b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(2) + ' MB');
+async function refreshLog() {
+  if (!$('section[data-s="data"]').classList.contains('on')) return;
+  const view = $('#logView');
+  let text = await api.logTail(400);
+  let lines = text ? text.split('\n') : [];
+  if ($('#logErrOnly').checked) lines = lines.filter((l) => / (WARN|ERROR) /.test(l));
+  view.innerHTML = lines.length
+    ? lines.map((l) => {
+        const c = / ERROR /.test(l) ? 'e' : / WARN /.test(l) ? 'w' : / DEBUG /.test(l) ? 'd' : '';
+        return c ? `<span class="${c}">${escH(l)}</span>` : escH(l);
+      }).join('\n')
+    : (S && S.logLevel === 'off' ? 'Log sedang mati. Pilih Hanya galat atau Semua aktivitas di atas.' : 'Log masih kosong.');
+  if ($('#logFollow').checked) view.scrollTop = view.scrollHeight;
+  $('#logInfo').textContent = 'pulau.log di folder data, ukuran ' + fmtSize(await api.logSize()) + '. Diputar otomatis setelah 2 MB.';
+}
+$('#logOpen').onclick = () => api.logOpen();
+$('#logClear').onclick = () => { if (confirm('Kosongkan isi log?')) { api.logClear(); setTimeout(refreshLog, 200); toast('Log dikosongkan'); } };
+$('#logRefresh').onclick = refreshLog;
+$('#logErrOnly').onchange = refreshLog;
+setInterval(refreshLog, 2000);
+$('#nav').addEventListener('click', () => setTimeout(refreshLog, 50));
 $('#resetData').onclick = () => {
   if (confirm('Hapus semua data Pulau? Pengaturan kembali ke awal dan tugas, catatan minum, serta rak file akan dikosongkan.')) {
     api.dataReset(); toast('Data dihapus');
