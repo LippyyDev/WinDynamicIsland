@@ -192,16 +192,20 @@ function dominant(px, w) {
   return [med(R), med(G), med(B)];
 }
 
+function wallpaperPath() {
+  const f = load(); if (!f) return '';
+  const buf = Buffer.alloc(1040);
+  f.SystemParametersInfoW(0x0073, 520, buf, 0); // SPI_GETDESKWALLPAPER
+  let p = buf.toString('utf16le').replace(/\0.*$/s, '');
+  if (!p || !fs.existsSync(p)) p = path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Themes', 'TranscodedWallpaper');
+  return fs.existsSync(p) ? p : '';
+}
+
 // Warna rata-rata bagian atas wallpaper (tempat bilah berada)
 let wallCache = { key: '', color: null };
 function wallpaperColor() {
-  const f = load(); if (!f) return null;
   try {
-    const buf = Buffer.alloc(1040);
-    f.SystemParametersInfoW(0x0073, 520, buf, 0);
-    let p = buf.toString('utf16le').replace(/\0.*$/s, '');
-    if (!p || !fs.existsSync(p)) p = path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Themes', 'TranscodedWallpaper');
-    if (!fs.existsSync(p)) return null;
+    const p = wallpaperPath(); if (!p) return null;
     const st = fs.statSync(p);
     const key = p + '|' + st.mtimeMs + '|' + st.size;
     if (wallCache.key === key) return wallCache.color;
@@ -222,4 +226,29 @@ function wallpaperColor() {
   } catch (_) { return null; }
 }
 
-module.exports = { foreground, wallpaperColor, windowTopColor, dominant, available: () => !!load(), error: () => loadError };
+// Irisan atas wallpaper sebesar bilah (mode Fill: menutupi layar, dipusatkan), diperkecil lalu dikirim sebagai data URI.
+// Di belakang bilah hanya ada wallpaper (area itu dicadangkan AppBar), jadi wallpaper yang dikaburkan di antarmuka
+// tampil sama dengan blur sistem, tanpa jendela kedua dan tanpa API Windows yang tidak resmi.
+let stripCache = { key: '', uri: '' };
+function wallpaperStrip(sw, sh, barPx) {
+  try {
+    const p = wallpaperPath(); if (!p) return '';
+    const st = fs.statSync(p);
+    const key = `${p}|${st.mtimeMs}|${st.size}|${sw}x${sh}|${barPx}`;
+    if (stripCache.key === key) return stripCache.uri;
+    const img = nativeImage.createFromBuffer(fs.readFileSync(p));
+    if (img.isEmpty()) return '';
+    const { width: iw, height: ih } = img.getSize();
+    const scale = Math.max(sw / iw, sh / ih);
+    const srcX = Math.max(0, Math.round(((iw * scale - sw) / 2) / scale));
+    const srcY = Math.max(0, Math.round(((ih * scale - sh) / 2) / scale));
+    const srcW = Math.max(1, Math.min(iw - srcX, Math.round(sw / scale)));
+    const srcH = Math.max(1, Math.min(ih - srcY, Math.round((barPx + 24) / scale)));
+    const strip = img.crop({ x: srcX, y: srcY, width: srcW, height: srcH }).resize({ width: Math.max(64, Math.round(sw / 3)) });
+    const uri = 'data:image/jpeg;base64,' + strip.toJPEG(75).toString('base64');
+    stripCache = { key, uri };
+    return uri;
+  } catch (_) { return ''; }
+}
+
+module.exports = { foreground, wallpaperColor, wallpaperStrip, windowTopColor, dominant, available: () => !!load(), error: () => loadError };

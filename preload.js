@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('pulau', {
   onHover: (cb) => on('hover', cb),
   onCursor: (cb) => on('cursor', cb),
   onEnv: (cb) => on('env', cb),
+  onBarImg: (cb) => on('bar-img', cb),
+  barImg: () => ipcRenderer.invoke('bar-img-get'),
   logoMenu: (x, y) => ipcRenderer.send('logo-menu', x, y),
   rect: (r) => ipcRenderer.send('island-rect', r),
   wantCursor: (v) => ipcRenderer.send('want-cursor', v),

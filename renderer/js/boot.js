@@ -9,6 +9,8 @@
     else P.mods.music.media(m);
   });
   if (api.onEnv) api.onEnv((e) => P.mods.menubar.env(e));
+  if (api.onBarImg) api.onBarImg((u) => P.mods.menubar.img(u));
+  if (api.barImg) api.barImg().then((u) => P.mods.menubar.img(u)).catch(() => {});
   api.onStore((k, v) => {
     P.data[k] = v;
     for (const m of Object.values(P.mods)) m.onData && m.onData(k);

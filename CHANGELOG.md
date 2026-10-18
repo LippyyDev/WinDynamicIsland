@@ -2,6 +2,18 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.4.7] 2026-10-18
+
+### Diubah
+- Efek Blur dibuat ulang: wallpaper di belakang bilah dikaburkan di antarmuka dan diberi tinta. Jendela latar kedua dan panggilan `SetWindowCompositionAttribute` dihapus
+
+### Diperbaiki
+- Strip blur menutupi bagian atas jendela lain (jendela transparan dipaksa minimal 64 piksel oleh Electron)
+- Blur tidak tampak buram di Windows 10
+
+### Kinerja
+- Satu proses lebih sedikit saat Blur aktif (sekitar 86 MB)
+
 ## [0.4.6] 2026-10-18
 
 ### Diperbaiki

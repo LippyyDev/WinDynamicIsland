@@ -18,35 +18,45 @@ P.mods.menubar = (() => {
      Sumber warna (barColor): auto = warna bagian atas jendela aktif, wallpaper saat di desktop; system = hitam atau putih.
      Efek (barEffect): solid = latar penuh; blur = kaca buram diwarnai sumber warna (digambar jendela terpisah);
      transparent = tanpa latar. Warna teks dipilih dari apa yang benar-benar terlihat di belakangnya. */
+  const tintAlpha = () => 0.2 + 0.75 * (Math.max(0, Math.min(100, Number(P.S.barBlurTint ?? 40))) / 100);
   function colors() {
     const S = P.S;
-    let effect = S.barEffect || 'solid';
-    if (effect === 'blur' && env.blur === false) effect = 'solid'; // blur gagal dibuat
+    const effect = S.barEffect || 'solid';
     const base = env.dark ? BLACK : WHITE;
     const src = S.barColor !== 'system' && env.color ? env.color : base;
-    let bg = src, ref = src, clear = false;
+    let bg = src, ref = src, clear = false, tint = null;
     if (effect === 'blur') {
-      const a = (16 + (Math.max(0, Math.min(100, Number(S.barBlurTint ?? 40))) / 100) * 219) / 255;
-      bg = null; clear = true; ref = mix(env.wall || base, src, a);
+      bg = null; clear = true; tint = src;
+      ref = mix(env.wall || base, src, tintAlpha()); // yang terlihat: wallpaper yang dikaburkan dan diberi tinta
     } else if (effect === 'transparent') {
       bg = null; clear = true; ref = env.wall || base;
     }
     const light = lum(ref) > 0.3;
-    return { bg, clear, fg: light ? [22, 22, 26] : [255, 255, 255], light };
+    return { bg, clear, tint, fg: light ? [22, 22, 26] : [255, 255, 255], light };
   }
-  let lastColors = '';
+  let imgUri = '', imgApplied = null, lastColors = '';
+  function applyImg() {
+    const want = P.S && P.S.barEffect === 'blur' ? imgUri : '';
+    if (want === imgApplied) return;
+    imgApplied = want;
+    $('#barImg').style.backgroundImage = want ? `url("${want}")` : 'none';
+  }
   function applyColors() {
     if (!P.S) return;
     const c = colors();
     const root = document.documentElement.style;
-    const key = JSON.stringify(c) + P.S.notch;
-    if (key === lastColors) return;
-    lastColors = key;
-    root.setProperty('--bar-bg', c.bg ? css(c.bg) : 'transparent');
-    root.setProperty('--bar-fg', css(c.fg));
-    root.setProperty('--bar-shadow', !c.clear ? 'none' : c.light ? '0 1px 2px rgba(255,255,255,.4)' : '0 1px 3px rgba(0,0,0,.6)');
-    document.body.classList.toggle('bar-black', !!P.S.notch && !c.clear);
-    document.body.classList.toggle('bar-clear', !!P.S.notch && c.clear);
+    const key = JSON.stringify(c) + P.S.notch + tintAlpha();
+    if (key !== lastColors) {
+      lastColors = key;
+      root.setProperty('--bar-bg', c.bg ? css(c.bg) : 'transparent');
+      root.setProperty('--bar-tint', c.tint ? `rgba(${c.tint.join(',')},${tintAlpha().toFixed(2)})` : 'transparent');
+      root.setProperty('--bar-fg', css(c.fg));
+      root.setProperty('--bar-shadow', !c.clear ? 'none' : c.light ? '0 1px 2px rgba(255,255,255,.4)' : '0 1px 3px rgba(0,0,0,.6)');
+      document.body.classList.toggle('bar-black', !!P.S.notch && !c.clear);
+      document.body.classList.toggle('bar-clear', !!P.S.notch && c.clear);
+      document.body.classList.toggle('bar-blur', !!P.S.notch && !!c.tint);
+    }
+    applyImg();
   }
 
   /* ---------- ikon ---------- */
@@ -108,6 +118,7 @@ P.mods.menubar = (() => {
 
   return {
     env(e) { env = e || env; applyColors(); paint(); },
+    img(u) { imgUri = u || ''; applyImg(); },
     net(m) { net = { signal: Number(m.signal), ssid: m.ssid || '' }; paint(); },
     sys(m) { vol = { vol: m.vol, mute: m.mute }; paint(); },
     decorate(mode, w) {
