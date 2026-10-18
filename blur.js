@@ -20,6 +20,7 @@ function load() {
       fn: user32.func('__stdcall', 'SetWindowCompositionAttribute', 'bool', ['intptr', koffi.pointer(DATA)]),
       SetWindowRgn: user32.func('__stdcall', 'SetWindowRgn', 'int', ['intptr', 'intptr', 'bool']),
       GetWindowRect: user32.func('__stdcall', 'GetWindowRect', 'bool', ['intptr', 'void*']),
+      SetWindowPos: user32.func('__stdcall', 'SetWindowPos', 'bool', ['intptr', 'intptr', 'int', 'int', 'int', 'int', 'uint32']),
       CreateRectRgn: gdi32.func('__stdcall', 'CreateRectRgn', 'intptr', ['int', 'int', 'int', 'int'])
     };
   } catch (e) { loadError = e.message; F = false; }
@@ -51,18 +52,21 @@ function disable(hwnd) {
   try { setAccent(hwnd, ACCENT_DISABLED, 0); } catch (_) {}
 }
 
-// Memotong jendela ke persegi w x h piksel fisik (relatif ke pojok kiri atas jendela). Efek blur ikut terpotong,
-// jadi tinggi bilah tetap tepat walau Windows membuat jendelanya lebih tinggi dari yang diminta.
-// Mengembalikan ukuran jendela sebenarnya { w, h } atau null.
-function clip(hwnd, w, h) {
+// Windows memaksa jendela transparan minimal 64 piksel (aturan Chromium untuk driver AMD), padahal bilah hanya 32.
+// Dua pengaman: (1) jendela digeser ke atas sebesar kelebihannya sehingga kelebihan itu jatuh di luar layar,
+// (2) jendela dipotong dengan SetWindowRgn tepat sebesar bilah, efek blur ikut terpotong.
+// x, y, w, h: letak bilah dalam piksel fisik. Mengembalikan ukuran jendela sebenarnya { w, h, off } atau null.
+function clip(hwnd, x, y, w, h) {
   if (!load()) return null;
   try {
     const rect = Buffer.alloc(16);
     F.GetWindowRect(hwnd, rect);
     const real = { w: rect.readInt32LE(8) - rect.readInt32LE(0), h: rect.readInt32LE(12) - rect.readInt32LE(4) };
-    const rgn = F.CreateRectRgn(0, 0, w, h); // setelah SetWindowRgn, region dimiliki sistem dan tidak boleh dihapus
+    const off = Math.max(0, real.h - h);
+    F.SetWindowPos(hwnd, 0, x, y - off, 0, 0, 0x0001 | 0x0004 | 0x0010); // NOSIZE | NOZORDER | NOACTIVATE
+    const rgn = F.CreateRectRgn(0, off, w, off + h); // setelah SetWindowRgn, region dimiliki sistem dan tidak boleh dihapus
     F.SetWindowRgn(hwnd, rgn, true);
-    return real;
+    return { ...real, off };
   } catch (e) { loadError = e.message; return null; }
 }
 

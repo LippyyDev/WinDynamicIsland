@@ -120,11 +120,11 @@ function clipBlur() {
   const b = primaryBounds();
   const barH = Math.max(20, Math.min(60, Number(s.barHeight) || 32));
   const phys = screen.dipToScreenRect(blurWin, { x: b.x, y: b.y, width: b.width, height: barH });
-  const real = blur.clip(hwndOf(blurWin), phys.width, phys.height);
+  const real = blur.clip(hwndOf(blurWin), phys.x, phys.y, phys.width, phys.height);
   const key = real ? `${real.w}x${real.h} -> ${phys.width}x${phys.height}` : '';
   if (key !== clipKey) {
     clipKey = key;
-    log.info('blur', real ? `Jendela blur ${real.w}x${real.h} px, dipotong ke bilah ${phys.width}x${phys.height} px (skala layar ${screen.getPrimaryDisplay().scaleFactor})` : 'Jendela blur tidak bisa dipotong: ' + blur.error());
+    log.info('blur', real ? `Jendela blur ${real.w}x${real.h} px, dipotong ke bilah ${phys.width}x${phys.height} px, digeser ${real.off} px ke atas layar (skala layar ${screen.getPrimaryDisplay().scaleFactor})` : 'Jendela blur tidak bisa dipotong: ' + blur.error());
   }
 }
 

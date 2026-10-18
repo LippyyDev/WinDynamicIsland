@@ -107,16 +107,25 @@ function windowTopColor(hwnd, bar) {
   const t0 = Date.now();
   const out = (color, why, extra) => ({ color, why, ms: Date.now() - t0, ...extra });
   const f = load(); if (!f) return out(null, 'win32 tidak tersedia');
-  if (f.IsIconic(hwnd)) return out(null, 'jendela diminimalkan');
-  let ok = f.DwmGetWindowAttribute && f.DwmGetWindowAttribute(hwnd, 9, RB, 16) === 0; // DWMWA_EXTENDED_FRAME_BOUNDS, tanpa bayangan
-  if (!ok) ok = f.GetWindowRect(hwnd, RB);
-  if (!ok) return out(null, 'batas jendela tidak terbaca');
-  const r = { left: RB.readInt32LE(0), top: RB.readInt32LE(4), right: RB.readInt32LE(8), bottom: RB.readInt32LE(12) };
-  const y = Math.max(r.top, bar.bottom) + 4;
-  const x0 = Math.max(r.left, bar.left) + 6, x1 = Math.min(r.right, bar.right) - 6;
-  const w = Math.min(x1 - x0, 4096);
-  const rect = `jendela ${r.left},${r.top},${r.right},${r.bottom} baris y=${y} lebar=${w}`;
-  if (w < 24 || y >= r.bottom - 2) return out(null, 'area terlalu kecil', { rect });
+  let r = null, mode = 'jendela', y = 0, x0 = 0, w = 0;
+  const calc = (rr) => {
+    y = Math.max(rr.top, bar.bottom) + 4;
+    x0 = Math.max(rr.left, bar.left) + 6;
+    w = Math.min(Math.min(rr.right, bar.right) - 6 - x0, 4096);
+  };
+  if (hwnd && !f.IsIconic(hwnd)) {
+    let ok = f.DwmGetWindowAttribute && f.DwmGetWindowAttribute(hwnd, 9, RB, 16) === 0; // DWMWA_EXTENDED_FRAME_BOUNDS, tanpa bayangan
+    if (!ok) ok = f.GetWindowRect(hwnd, RB);
+    if (ok) { r = { left: RB.readInt32LE(0), top: RB.readInt32LE(4), right: RB.readInt32LE(8), bottom: RB.readInt32LE(12) }; calc(r); }
+  }
+  if (!r || w < 24 || y >= r.bottom - 2) {
+    // Jendela aktif tidak ada di bawah bilah (monitor lain, diminimalkan): baca saja apa yang ada tepat di bawah bilah
+    mode = 'layar';
+    r = { left: bar.left, top: bar.bottom, right: bar.right, bottom: bar.bottom + 200 };
+    calc(r);
+  }
+  const rect = `${mode} ${r.left},${r.top},${r.right},${r.bottom} baris y=${y} lebar=${w}`;
+  if (w < 24) return out(null, 'area terlalu kecil', { rect });
 
   let sdc = 0, mdc = 0, bmp = 0, old = 0;
   try {

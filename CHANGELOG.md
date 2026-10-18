@@ -2,6 +2,12 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.4.6] 2026-10-18
+
+### Diperbaiki
+- Warna Otomatis gagal bila jendela aktif ada di monitor lain (lebar area negatif). Kini yang dibaca adalah piksel tepat di bawah bilah di monitor utama
+- Jendela blur yang dipaksa Windows menjadi 64 piksel kini juga digeser ke atas layar sehingga kelebihannya tidak terlihat, selain dipotong
+
 ## [0.4.5] 2026-10-18
 
 ### Ditambahkan
