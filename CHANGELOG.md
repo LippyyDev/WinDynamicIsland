@@ -2,6 +2,12 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.5.3] 2026-10-20
+
+### Diubah
+- Isi notifikasi dan indikator (ikon, judul, keterangan, nilai di kanan) dipusatkan, baik vertikal maupun horizontal, dengan padding kiri dan kanan seimbang
+- Keterangan atau nilai kanan yang kosong tidak lagi menyisakan ruang yang menggeser judul dari tengah
+
 ## [0.5.2] 2026-10-20
 
 ### Ditambahkan

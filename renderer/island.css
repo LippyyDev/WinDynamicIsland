@@ -169,19 +169,20 @@ body.notch .c-left .art { width: min(26px, calc(var(--barh) - 6px)); height: min
 .c-timer { font-size: 13px; font-weight: 700; color: var(--pc); font-variant-numeric: tabular-nums; }
 
 /* ================= alert ================= */
-.v-alert { display: flex; align-items: center; gap: 13px; padding: 0 20px 0 12px; }
+.v-alert { display: flex; align-items: center; justify-content: center; gap: 13px; padding: 0 16px; }
 .al-icon { width: 40px; height: 40px; flex: none; display: grid; place-items: center; position: relative; }
 .al-icon svg.ring { position: absolute; inset: 0; width: 40px; height: 40px; transform: rotate(-90deg); }
 .al-icon svg.ring circle { fill: none; stroke-width: 3.5; stroke-linecap: round; }
 .al-icon .glyph { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .al-icon .glyph.fill { fill: #fff; stroke: none; }
-.al-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.al-txt b { font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.al-txt span { font-size: 12px; color: var(--txt2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.al-txt { flex: 0 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1px; }
+.al-txt span:empty, .al-right:empty { display: none; }
+.al-txt b { line-height: 1.25; font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.al-txt span { line-height: 1.25; font-size: 12px; color: var(--txt2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .al-right { flex: none; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; display: flex; align-items: center; }
 .al-right .vbar { width: 120px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .15); overflow: hidden; }
 .al-right .vbar i { display: block; height: 100%; background: #fff; border-radius: 3px; transition: width .15s; }
-#island.al-small .v-alert { gap: 10px; padding: 0 16px 0 10px; }
+#island.al-small .v-alert { gap: 10px; padding: 0 14px; }
 #island.al-small .al-icon { width: 28px; height: 28px; }
 #island.al-small .al-icon svg.ring { width: 28px; height: 28px; }
 #island.al-small .al-icon .glyph { width: 14px; height: 14px; }
