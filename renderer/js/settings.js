@@ -22,6 +22,10 @@ function fill() {
     const v = getP(S, el.dataset.k);
     if (el.type === 'checkbox') el.checked = !!v;
     else if (document.activeElement !== el) el.value = v;
+  }
+  for (const box of $$('[data-multi]')) {
+    const cur = getP(S, box.dataset.multi);
+    for (const c of box.children) c.classList.toggle('on', Array.isArray(cur) && cur.includes(c.dataset.v));
   }  // baris yang hanya relevan untuk pilihan tertentu, misalnya data-when="barEffect=blur"
   for (const el of $$('[data-when]')) {
     const [k, v] = el.dataset.when.split('=');
@@ -52,6 +56,17 @@ function bind() {
         api.set('settings', S); toast();
       });
     }
+  }
+  // pilihan ganda berbentuk chip: Otomatis saling menggantikan dengan pilihan lain
+  for (const box of $$('[data-multi]')) {
+    box.addEventListener('click', (e) => {
+      const c = e.target.closest('.chip'); if (!c) return;
+      const k = box.dataset.multi, v = c.dataset.v;
+      let cur = Array.isArray(getP(S, k)) ? [...getP(S, k)] : [];
+      if (cur.includes(v)) cur = cur.filter((x) => x !== v);
+      else cur = v === 'auto' ? ['auto'] : [...cur.filter((x) => x !== 'auto'), v];
+      setP(S, k, cur); api.set('settings', S); fill(); toast();
+    });
   }
   // cegah semua halaman dimatikan
   for (const el of $$('[data-k^="pages."]')) {

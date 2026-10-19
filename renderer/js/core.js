@@ -160,13 +160,14 @@ function render() {
   else if (buildCompact()) mode = 'compact';
   else mode = 'idle';
   if (mode !== 'idle') P.alt = false;
-  const idle = mode === 'idle' ? idleStyle() : '';
+  const idle = mode === 'idle' ? idleItems() : [];
 
   island.dataset.mode = mode;
   island.dataset.page = P.page;
-  island.dataset.idle = idle;
+  island.dataset.idle = idle.join(' ');
   idleApply();
-  if ((idle === 'eyes') !== P.curOn) { P.curOn = idle === 'eyes'; api.wantCursor(P.curOn); }
+  const eyesOn = idle.includes('eyes');
+  if (eyesOn !== P.curOn) { P.curOn = eyesOn; api.wantCursor(eyesOn); }
   island.classList.toggle('al-small', mode === 'alert' && (P.alert.h || 64) < 56);
 
   const notch = !!P.S.notch;
@@ -178,8 +179,7 @@ function render() {
   if (mode === 'expanded') { w = P.mods[P.page].width(); h = 190; }
   else if (mode === 'alert') { w = P.alert.w || 380; h = Math.max(P.alert.h || 64, notch ? barH : 0); }
   else if (mode === 'compact') { w = P.compactW; h = notch ? barH : 38; }
-  else if (idle === 'eyes') { w = 124; }
-  else if (idle === 'text') { w = Math.max(150, Math.min(280, 44 + (String(P.S.idleText || '').length) * 8)); }
+  else if (idle.length) { w = idleWidth(idle); }
   island.style.width = w + 'px';
   island.style.height = h + 'px';
 
@@ -285,20 +285,34 @@ function clock() {
 }
 
 /* ---------- tampilan idle (bisa dikustom) ---------- */
-const IDLE_STYLES = ['clock', 'date', 'text', 'battery', 'breath', 'wave', 'cam', 'eyes', 'none'];
+const IDLE_ITEMS = ['cam', 'eyes', 'breath', 'wave', 'clock', 'date', 'text', 'battery']; // urutan tampil
 const idleBat = { level: -1, charging: false };
-// gaya yang berlaku sekarang: gaya dasar, atau gaya "setelah lama diam" bila P.alt aktif
-function idleStyle() {
-  let s = P.alt ? P.S.idleAlt : P.S.idleStyle;
-  if (!s || s === 'auto' || s === 'same' || !IDLE_STYLES.includes(s)) s = P.S.notch && P.S.menubar !== false ? 'cam' : 'clock';
-  if (s === 'battery' && idleBat.level < 0) s = P.S.notch && P.S.menubar !== false ? 'cam' : 'clock'; // PC tanpa baterai
-  return s;
+const autoIdle = () => (P.S.notch && P.S.menubar !== false ? 'cam' : 'clock');
+// item yang tampil sekarang: pilihan dasar, atau pilihan "setelah lama diam" bila P.alt aktif
+function idleItems() {
+  const raw = P.alt ? P.S.idleAltItems : P.S.idleItems;
+  const list = Array.isArray(raw) ? raw : [];
+  const set = new Set(list.map((x) => (x === 'auto' ? autoIdle() : x)));
+  if (idleBat.level < 0) set.delete('battery'); // PC tanpa baterai
+  if (!set.size && list.length) set.add(autoIdle());
+  return IDLE_ITEMS.filter((x) => set.has(x));
 }
-let idleSig = '';
+let idleSig = '', idleW = 150;
+// lebar pulau mengikuti isinya; diukur hanya saat isi berubah
+function idleWidth(items) {
+  if (items.length === 1 && items[0] === 'eyes') return 124;
+  const sig = items.join() + '|' + (P.S.idleText || '') + '|' + $('#idleDate').textContent + '|' + idleBat.level;
+  if (sig === idleSig) return idleW;
+  idleSig = sig;
+  const row = $('#idleRow');
+  idleW = Math.max(150, Math.min(380, Math.ceil(row.offsetWidth) + 44));
+  return idleW;
+}
+let idleApplied = '';
 function idleApply() { // tulis DOM hanya bila isinya berubah
   const sig = (P.S.idleText || '') + '|' + idleBat.level + idleBat.charging;
-  if (sig === idleSig) return;
-  idleSig = sig;
+  if (sig === idleApplied) return;
+  idleApplied = sig;
   $('#idleText').textContent = String(P.S.idleText || '').slice(0, 16);
   if (idleBat.level >= 0) {
     const pct = Math.round(idleBat.level * 100);
@@ -319,13 +333,12 @@ if (navigator.getBattery) {
 }
 function eyesTick() { // nama lama: sekarang mengatur peralihan ke gaya "setelah lama diam"
   if (!P.S) return;
-  const alt = P.S.idleAlt;
-  const want = !!alt && alt !== 'same' && island.dataset.mode === 'idle' && !P.alert &&
+  const want = Array.isArray(P.S.idleAltItems) && P.S.idleAltItems.length > 0 && island.dataset.mode === 'idle' && !P.alert &&
     Date.now() - P.lastActive > (P.S.eyesAfter || 20) * 1000;
   if (want !== P.alt) { P.alt = want; render(); }
 }
 api.onCursor(({ x, y }) => {
-  if (island.dataset.idle !== 'eyes') return;
+  if (!P.curOn) return;
   const cx = window.innerWidth / 2;
   const ex = Math.max(-1, Math.min(1, (x - cx) / 220)) * 3.5;
   const ey = Math.max(-1, Math.min(1, (y - 16) / 220)) * 3.5;

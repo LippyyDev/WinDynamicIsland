@@ -40,7 +40,7 @@ body:not(.menubar) .mb-left, body:not(.menubar) .mb-right { visibility: hidden; 
 .mb-it svg .dim { opacity: .3; }
 .mb-it .pct { font-size: 12px; }
 .mb-clock { font-weight: 600; }
-.cam { display: none; grid-area: 1 / 1; width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #2b3242 0 25%, #12141a 45%); box-shadow: 0 0 0 1.5px #0b0b0d; }
+.cam { display: none; width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #2b3242 0 25%, #12141a 45%); box-shadow: 0 0 0 1.5px #0b0b0d; }
 body.bar-black #island::before, body.bar-black #island::after { display: none; }
 body.bar-black #island[data-mode="idle"] .body, body.bar-black #island[data-mode="compact"] .body { box-shadow: none; }
 body.notch .c-left .art { width: min(26px, calc(var(--barh) - 6px)); height: min(26px, calc(var(--barh) - 6px)); }
@@ -128,19 +128,20 @@ body.notch .c-left .art { width: min(26px, calc(var(--barh) - 6px)); height: min
 
 /* ================= idle ================= */
 .v-idle { display: grid; place-items: center; }
-/* hanya satu gaya yang tampil; yang lain display:none sehingga animasinya benar benar berhenti */
-.v-idle > * { grid-area: 1 / 1; display: none; animation: idleIn .35s ease both; }
+.idle-row { display: flex; align-items: center; justify-content: center; gap: 12px; white-space: nowrap; flex: none; }
+/* hanya gaya yang dipilih yang tampil; sisanya display:none sehingga animasinya benar benar berhenti */
+.idle-row > * { display: none; flex: none; animation: idleIn .35s ease both; }
 @keyframes idleIn { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: none; } }
-#island[data-idle="clock"] .idle-clock { display: flex; }
-#island[data-idle="date"] .idle-date { display: block; }
-#island[data-idle="text"] .idle-text { display: block; }
-#island[data-idle="battery"] .idle-bat { display: flex; }
-#island[data-idle="breath"] .idle-breath { display: block; }
-#island[data-idle="wave"] .idle-wave { display: block; }
-#island[data-idle="cam"] .cam { display: block; }
-#island[data-idle="eyes"] .eyes { display: flex; }
+#island[data-idle~="clock"] .idle-clock { display: flex; }
+#island[data-idle~="date"] .idle-date { display: block; }
+#island[data-idle~="text"] .idle-text { display: block; }
+#island[data-idle~="battery"] .idle-bat { display: flex; }
+#island[data-idle~="breath"] .idle-breath { display: block; }
+#island[data-idle~="wave"] .idle-wave { display: block; }
+#island[data-idle~="cam"] .cam { display: block; }
+#island[data-idle~="eyes"] .eyes { display: flex; }
 .idle-clock { align-items: center; gap: 8px; font-size: 13px; font-weight: 700; letter-spacing: .2px; font-variant-numeric: tabular-nums; }
-.idle-date, .idle-text { font-size: 12.5px; font-weight: 700; letter-spacing: .2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; padding: 0 12px; }
+.idle-date, .idle-text { font-size: 12.5px; font-weight: 700; letter-spacing: .2px; white-space: nowrap; }
 .idle-bat { align-items: center; gap: 6px; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .idle-bat svg { width: 16px; height: 16px; transform: rotate(-90deg); fill: none; stroke-width: 2.6; stroke-linecap: round; }
 .idle-bat .trk { stroke: rgba(255, 255, 255, .22); }
@@ -150,7 +151,6 @@ body.notch .c-left .art { width: min(26px, calc(var(--barh) - 6px)); height: min
 .idle-wave { width: 56px; height: 14px; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 28%, #000 72%, transparent); }
 .idle-wave svg { display: block; fill: none; stroke: rgb(var(--accent)); stroke-width: 1.8; stroke-linecap: round; animation: wave 2.4s linear infinite; }
 @keyframes wave { from { transform: translateX(0); } to { transform: translateX(-56px); } }
-.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px rgba(61, 220, 132, .7); }
 .eyes { gap: 14px; }
 .eye { width: 15px; height: 19px; border-radius: 50%; background: #fff; position: relative; overflow: hidden; animation: blink 5.5s infinite; }
 .eye b { position: absolute; width: 8px; height: 9px; border-radius: 50%; background: #000; left: 3.5px; top: 5px; transform: translate(var(--ex, 0), var(--ey, 0)); transition: transform .14s ease-out; }

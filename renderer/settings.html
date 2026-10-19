@@ -36,34 +36,12 @@
     </div>
     <h2>Tampilan saat diam</h2>
     <div class="card">
-      <label class="row"><div><b>Tampilan pulau saat diam</b><span>Isi pulau ketika tidak ada musik, notifikasi, atau timer. Otomatis: titik kamera di mode notch, jam di mode biasa.</span></div>
-        <select class="sel" data-k="idleStyle">
-          <option value="auto">Otomatis</option>
-          <option value="clock">Jam</option>
-          <option value="date">Tanggal</option>
-          <option value="text">Teks kustom</option>
-          <option value="battery">Baterai</option>
-          <option value="breath">Napas (titik berdenyut)</option>
-          <option value="wave">Gelombang</option>
-          <option value="cam">Titik kamera</option>
-          <option value="eyes">Mata</option>
-          <option value="none">Kosong</option>
-        </select></label>
-      <label class="row"><div><b>Tampilan setelah lama diam</b><span>Berganti otomatis bila tidak ada aktivitas. Mata mengikuti kursor.</span></div>
-        <select class="sel" data-k="idleAlt">
-          <option value="same">Tidak berganti</option>
-          <option value="eyes">Mata</option>
-          <option value="breath">Napas (titik berdenyut)</option>
-          <option value="wave">Gelombang</option>
-          <option value="clock">Jam</option>
-          <option value="date">Tanggal</option>
-          <option value="text">Teks kustom</option>
-          <option value="battery">Baterai</option>
-          <option value="cam">Titik kamera</option>
-          <option value="none">Kosong</option>
-        </select></label>
+      <div class="row col"><div><b>Tampilan pulau saat diam</b><span>Pilih satu atau lebih, semuanya tampil berdampingan. Kosongkan semua untuk pulau polos. Otomatis: titik kamera di mode notch, jam di mode biasa.</span></div>
+        <div class="chips" data-multi="idleItems"><button class="chip" data-v="auto">Otomatis</button><button class="chip" data-v="clock">Jam</button><button class="chip" data-v="date">Tanggal</button><button class="chip" data-v="text">Teks kustom</button><button class="chip" data-v="battery">Baterai</button><button class="chip" data-v="breath">Napas</button><button class="chip" data-v="wave">Gelombang</button><button class="chip" data-v="cam">Titik kamera</button><button class="chip" data-v="eyes">Mata</button></div></div>
+      <div class="row col"><div><b>Tampilan setelah lama diam</b><span>Menggantikan tampilan di atas bila tidak ada aktivitas. Kosongkan semua agar tidak berganti. Mata mengikuti kursor.</span></div>
+        <div class="chips" data-multi="idleAltItems"><button class="chip" data-v="clock">Jam</button><button class="chip" data-v="date">Tanggal</button><button class="chip" data-v="text">Teks kustom</button><button class="chip" data-v="battery">Baterai</button><button class="chip" data-v="breath">Napas</button><button class="chip" data-v="wave">Gelombang</button><button class="chip" data-v="cam">Titik kamera</button><button class="chip" data-v="eyes">Mata</button></div></div>
       <label class="row"><div><b>Berganti setelah</b><span>Lama tidak ada aktivitas, dalam detik.</span></div><span class="num"><input type="number" data-k="eyesAfter" min="5" max="600" step="5"><em>detik</em></span></label>
-      <label class="row"><div><b>Teks kustom</b><span>Dipakai bila salah satu tampilan di atas diset ke Teks kustom. Maksimal 16 karakter.</span></div><input type="text" class="sel" data-k="idleText" maxlength="16" style="width:150px;cursor:text"></label>
+      <label class="row"><div><b>Teks kustom</b><span>Dipakai bila Teks kustom dipilih di atas. Maksimal 16 karakter.</span></div><input type="text" class="sel" data-k="idleText" maxlength="16" style="width:150px;cursor:text"></label>
     </div>
     <h2>Mode notch</h2>
     <div class="card">

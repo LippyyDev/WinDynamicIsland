@@ -450,6 +450,13 @@ app.whenReady().then(() => {
   // migrasi dari 0.4.9: saklar "mata" menjadi pilihan gaya idle (idleAlt)
   { const s = store.get('settings');
     if (!s._migrated050) { if (s.eyes === false) s.idleAlt = 'same'; delete s.eyes; s._migrated050 = true; store.set('settings', s); } }
+  // migrasi dari 0.5.0: gaya idle tunggal (teks) menjadi daftar yang bisa dipilih banyak (idleItems, idleAltItems)
+  { const s = store.get('settings');
+    if (!s._migrated051) {
+      if (typeof s.idleStyle === 'string') s.idleItems = [s.idleStyle];
+      if (typeof s.idleAlt === 'string') s.idleAltItems = s.idleAlt === 'same' || s.idleAlt === 'none' ? [] : [s.idleAlt];
+      delete s.idleStyle; delete s.idleAlt; s._migrated051 = true; store.set('settings', s);
+    } }
   lastSettings = JSON.parse(JSON.stringify(store.get('settings')));
   log.setLevel(lastSettings.logLevel);
   log.info('app', `Pulau ${app.getVersion()} dimulai (Electron ${process.versions.electron}, Windows ${process.getSystemVersion ? process.getSystemVersion() : ''})`);

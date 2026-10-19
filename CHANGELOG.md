@@ -2,6 +2,14 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.5.1] 2026-10-19
+
+### Diubah
+- Tampilan idle bisa dipilih lebih dari satu (multi pilihan) dan tampil berdampingan, misalnya jam + tanggal + baterai
+- Titik hijau di samping jam dihapus
+- Lebar pulau mengikuti isi yang dipilih (diukur hanya saat isi berubah)
+- Pengaturan lama (satu gaya) dimigrasikan otomatis ke daftar baru
+
 ## [0.5.0] 2026-10-19
 
 ### Ditambahkan
