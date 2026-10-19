@@ -143,6 +143,34 @@ function checkMarquee(span = $('#cLine')) {
 }
 island.addEventListener('transitionend', (e) => { if (e.target === island && e.propertyName === 'width') checkMarquee(); });
 
+/* ---------- lebar otomatis mengikuti teks, dengan batas maksimal dari pengaturan ---------- */
+const autoW = () => P.S.autoWidth !== false;
+const maxW = () => Math.max(240, Math.min(800, Number(P.S.maxW) || 400));
+const mctx = document.createElement('canvas').getContext('2d');
+function textW(el, text) { // diukur lewat canvas: tidak terpengaruh transformasi animasi atau batas wadah
+  const cs = getComputedStyle(el);
+  mctx.font = cs.font;
+  mctx.letterSpacing = cs.letterSpacing === 'normal' ? '0px' : cs.letterSpacing;
+  return Math.ceil(mctx.measureText(text || '').width);
+}
+function boxExtra(view, nParts) { // padding kiri kanan dan jarak antar bagian
+  const cs = getComputedStyle(view);
+  return parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + (parseFloat(cs.columnGap) || 0) * Math.max(0, nParts - 1);
+}
+function fitCompact() {
+  const line = $('#cLine'), left = $('#cLeft').offsetWidth, right = $('#cRight').offsetWidth;
+  const txt = textW(line, line.textContent);
+  const w = Math.max(190, Math.min(maxW(), boxExtra($('.v-compact'), 1 + (txt ? 1 : 0) + (right ? 1 : 0)) + left + right + txt + 14));
+  if (P.fitC && Math.abs(w - P.fitC) < 14) return P.fitC; // hindari goyang kecil saat lirik berganti
+  return (P.fitC = w);
+}
+function fitAlert() {
+  const a = P.alert, ic = $('#alIcon').offsetWidth, rt = $('#alRight').offsetWidth;
+  const txt = Math.max(textW($('#alTitle'), a.title), textW($('#alSub'), a.sub));
+  const parts = [ic, txt, rt].filter((x) => x > 0).length;
+  return Math.max(220, Math.min(maxW(), boxExtra($('.v-alert'), parts) + ic + rt + txt + 6));
+}
+
 /* ---------- render ---------- */
 const TITLE_COLOR = { water: 'var(--blue)', shelf: 'var(--amber)', todo: 'var(--green)', pomodoro: 'var(--red)' };
 function pagesOn() {
@@ -177,8 +205,8 @@ function render() {
   document.documentElement.style.setProperty('--barh', barH + 'px');
   let w = 150, h = notch ? barH : 32;
   if (mode === 'expanded') { w = P.mods[P.page].width(); h = 190; }
-  else if (mode === 'alert') { w = P.alert.w || 380; h = Math.max(P.alert.h || 64, notch ? barH : 0); }
-  else if (mode === 'compact') { w = P.compactW; h = notch ? barH : 38; }
+  else if (mode === 'alert') { w = autoW() ? fitAlert() : P.alert.w || 380; h = Math.max(P.alert.h || 64, notch ? barH : 0); }
+  else if (mode === 'compact') { w = autoW() ? fitCompact() : P.compactW; P.compactW = w; h = notch ? barH : 38; }
   else if (idle.length) { w = idleWidth(idle); }
   island.style.width = w + 'px';
   island.style.height = h + 'px';
@@ -301,11 +329,11 @@ let idleSig = '', idleW = 150;
 // lebar pulau mengikuti isinya; diukur hanya saat isi berubah
 function idleWidth(items) {
   if (items.length === 1 && items[0] === 'eyes') return 124;
-  const sig = items.join() + '|' + (P.S.idleText || '') + '|' + $('#idleDate').textContent + '|' + idleBat.level;
+  const sig = items.join() + '|' + (P.S.idleText || '') + '|' + $('#idleDate').textContent + '|' + idleBat.level + '|' + maxW();
   if (sig === idleSig) return idleW;
   idleSig = sig;
   const row = $('#idleRow');
-  idleW = Math.max(150, Math.min(380, Math.ceil(row.offsetWidth) + 44));
+  idleW = Math.max(150, Math.min(maxW(), Math.ceil(row.offsetWidth) + 44));
   return idleW;
 }
 let idleApplied = '';

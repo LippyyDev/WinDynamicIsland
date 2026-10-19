@@ -32,6 +32,8 @@
     <p class="lead">Atur perilaku pulau di bagian atas layar.</p>
     <div class="card">
       <label class="row"><div><b>Jalankan saat Windows mulai</b><span>Pulau langsung muncul setelah login.</span></div><input type="checkbox" class="sw" id="autostart"></label>
+      <label class="row"><div><b>Lebar pulau otomatis</b><span>Pulau melebar atau menyempit mengikuti panjang teks (judul lagu, notifikasi, tampilan diam), tanpa ruang kosong berlebih. Bila dimatikan, lebar tetap seperti versi lama.</span></div><input type="checkbox" class="sw" data-k="autoWidth"></label>
+      <label class="row" data-when="autoWidth=true"><div><b>Lebar maksimal</b><span>Batas lebar saat otomatis. Teks yang lebih panjang berjalan (marquee) atau dipotong.</span></div><span class="num"><input type="number" data-k="maxW" min="240" max="800" step="20"><em>px</em></span></label>
       <label class="row"><div><b>Jeda sebelum terbuka</b><span>Waktu tunggu saat kursor diarahkan ke pulau.</span></div><span class="num"><input type="number" data-k="hoverDelay" min="0" max="1500" step="20"><em>ms</em></span></label>
     </div>
     <h2>Tampilan saat diam</h2>

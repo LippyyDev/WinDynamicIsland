@@ -2,6 +2,16 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.5.2] 2026-10-20
+
+### Ditambahkan
+- Lebar pulau otomatis mengikuti lebar teks (mode ringkas musik, notifikasi, dan tampilan diam), tanpa ruang kosong berlebih
+- Pengaturan "Lebar pulau otomatis" (bisa dimatikan untuk kembali ke lebar tetap) dan "Lebar maksimal" (240 sampai 800 px, bawaan 400)
+
+### Catatan teknis
+- Lebar teks diukur lewat `canvas.measureText`, jadi tidak terpengaruh transformasi animasi dan hanya dihitung saat render
+- Perubahan lebar di bawah 14 px diabaikan di mode ringkas supaya pulau tidak bergoyang saat lirik berganti
+
 ## [0.5.1] 2026-10-19
 
 ### Diubah

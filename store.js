@@ -8,6 +8,8 @@ const DEFAULTS = {
     lyricsCompact: true,
     artColor: true,
     artOnline: true,
+    autoWidth: true,
+    maxW: 400,
     idleItems: ['auto'],
     idleAltItems: ['eyes'],
     idleText: 'Pulau',

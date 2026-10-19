@@ -37,7 +37,7 @@ function bind() {
   for (const el of $$('[data-k]')) {
     const k = el.dataset.k;
     if (el.type === 'checkbox') {
-      el.addEventListener('change', () => { setP(S, k, el.checked); api.set('settings', S); toast(); });
+      el.addEventListener('change', () => { setP(S, k, el.checked); api.set('settings', S); fill(); toast(); });
     } else if (el.tagName === 'SELECT') {
       el.addEventListener('change', () => { setP(S, k, el.value); api.set('settings', S); fill(); toast(); setTimeout(refreshLog, 300); });
     } else if (el.type === 'text') {

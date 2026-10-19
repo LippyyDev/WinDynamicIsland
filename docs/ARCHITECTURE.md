@@ -101,7 +101,7 @@ Tanpa kerangka kerja. Satu objek global `P` menampung state dan modul.
 
 | Berkas | Tugas |
 | --- | --- |
-| `js/core.js` | Mode kapsul, ukuran, navigasi halaman, antrean notifikasi, jam, tampilan idle (gaya dasar dan gaya setelah lama diam), laporan area kapsul. |
+| `js/core.js` | Mode kapsul, ukuran, navigasi halaman, antrean notifikasi, jam, tampilan idle (gaya dasar dan gaya setelah lama diam), lebar otomatis (`fitCompact`, `fitAlert`, `idleWidth`), laporan area kapsul. |
 | `js/music.js` | State musik, sampul dan warna, lirik LRCLIB, *progress bar*. |
 | `js/pomodoro.js` | Mesin timer berbasis waktu akhir (`endAt`) sehingga akurat dan tahan ditutup ulang. |
 | `js/water.js` | Catatan per jam, grafik, pengingat. |

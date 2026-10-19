@@ -2,7 +2,7 @@
 
 *Dynamic Island* untuk Windows 10 dan 11. Sebuah kapsul hitam di tengah atas layar yang menampilkan pemutar musik dengan lirik tersinkron, timer Pomodoro, pengingat minum, rak file, daftar tugas, dan notifikasi sistem. Semua data tersimpan di PC sendiri, tanpa akun dan tanpa server.
 
-> Status: versi 0.5.1. Dibuat dengan Electron. Bagian yang membaca musik dan sistem dari Windows belum diuji pada banyak perangkat, jadi laporan *bug* sangat membantu.
+> Status: versi 0.5.2. Dibuat dengan Electron. Bagian yang membaca musik dan sistem dari Windows belum diuji pada banyak perangkat, jadi laporan *bug* sangat membantu.
 
 ## Fitur
 
@@ -16,6 +16,7 @@
 | Rak File | Seret file ke pulau, seret keluar ke aplikasi lain. Hanya menyimpan lokasi file. |
 | Daftar Tugas | Tugas harian dengan pengingat jam. Klik dua kali untuk mengubah teks. |
 | Notifikasi sistem | Pengisi daya, baterai lemah, *headphone* atau *speaker* terhubung, Caps Lock, volume. |
+| Lebar pulau otomatis | Pulau melebar atau menyempit mengikuti panjang teks (judul lagu, notifikasi, tampilan diam) sampai batas lebar maksimal yang bisa diatur (bawaan 400 px). |
 | Tampilan saat diam | Isi pulau saat tidak ada musik atau notifikasi bisa dipilih lebih dari satu dan tampil berdampingan: jam, tanggal, teks kustom (maks. 16 karakter), baterai, napas, gelombang, titik kamera, atau mata. Kosongkan semua untuk pulau polos. Ada pilihan kedua yang menggantikannya setelah beberapa saat tanpa aktivitas (bawaan: mata yang mengikuti kursor). |
 | Mode *notch* | Area atas layar dicadangkan seperti *notch* MacBook, jadi jendela yang dimaksimalkan tidak tertutup pulau. Bilah hitam penuh, tinggi bilah dapat diatur, pulau otomatis sembunyi saat layar penuh. |
 | Bilah menu | Seperti macOS: logo dengan menu cepat, aplikasi aktif dan judul jendela di kiri, Wi-Fi, volume, baterai, tanggal dan jam di kanan. Warna bilah Otomatis mengikuti bagian atas jendela yang aktif (wallpaper saat di desktop), atau Ikuti tema sistem (hitam atau putih). Efek latar dipilih terpisah: Padat, Blur (hanya saat desktop terlihat; wallpaper dikaburkan dan diberi tinta; kekuatan blur 0 sampai 100% dengan 0% berarti transparan, dan kepekatan warna diatur terpisah), atau Transparan. |
@@ -64,7 +65,7 @@ npm run dist       # bangun installer di folder dist/
 
 Di Linux atau macOS, antarmuka tetap bisa dibuka untuk pengerjaan tampilan, tetapi data musik dan sistem tidak tersedia karena memakai PowerShell dan API Windows.
 
-*Installer* juga dibangun otomatis oleh GitHub Actions (`.github/workflows/build.yml`) pada setiap *push*. Untuk membuat rilis, beri *tag* `v0.5.1` dan hasilnya terlampir di halaman Releases.
+*Installer* juga dibangun otomatis oleh GitHub Actions (`.github/workflows/build.yml`) pada setiap *push*. Untuk membuat rilis, beri *tag* `v0.5.2` dan hasilnya terlampir di halaman Releases.
 
 ## Struktur proyek
 
