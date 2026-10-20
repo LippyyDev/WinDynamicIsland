@@ -38,5 +38,18 @@ contextBridge.exposeInMainWorld('pulau', {
 
   dataFolder: () => ipcRenderer.send('data-folder'),
   dataReset: () => ipcRenderer.send('data-reset'),
-  version: () => ipcRenderer.invoke('version')
+  version: () => ipcRenderer.invoke('version'),
+
+  // Agen AI
+  onAgent: (cb) => on('agent-status', cb),
+  onAgentEvent: (cb) => on('agent-event', cb),
+  openAgent: () => ipcRenderer.send('open-agent'),
+  agentState: () => ipcRenderer.invoke('agent-state'),
+  agentStart: (goal) => ipcRenderer.invoke('agent-start', goal),
+  agentStop: () => ipcRenderer.send('agent-stop'),
+  agentAnswer: (id, v) => ipcRenderer.send('agent-answer', id, v),
+  agentKeySet: (k) => ipcRenderer.invoke('agent-key-set', k),
+  agentKeyHas: () => ipcRenderer.invoke('agent-key-has'),
+  agentKeyClear: () => ipcRenderer.invoke('agent-key-clear'),
+  agentTest: () => ipcRenderer.invoke('agent-test')
 });
