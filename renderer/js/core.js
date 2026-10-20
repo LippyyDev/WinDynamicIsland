@@ -42,7 +42,6 @@ const G = {
   check: '<svg class="glyph" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
   timer: '<svg class="glyph" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.2 1.6M9.5 2.5h5"/></svg>',
   bell: '<svg class="glyph" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg>',
-  bot: '<svg class="glyph" viewBox="0 0 24 24"><rect x="5" y="8.5" width="14" height="10" rx="3"/><path d="M12 5v3.5M9.5 13v1.5M14.5 13v1.5"/></svg>',
   file: '<svg class="glyph" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg>'
 };
 function ringIcon(frac, color, glyph) {
@@ -70,23 +69,6 @@ function chime(kind = 'soft') {
   } catch (_) {}
 }
 
-/* ---------- suara bacaan notifikasi (TTS bawaan Windows, gratis dan offline) ---------- */
-const NO_SPEAK = new Set(['vol', 'caps', 'agent']); // terlalu sering atau sudah punya status sendiri
-function speak(a) {
-  const n = P.S && P.S.notify;
-  if (!n || !n.speak || !a || NO_SPEAK.has(a.id) || !window.speechSynthesis) return;
-  try {
-    const text = [a.title, a.sub].filter(Boolean).join('. ');
-    if (!text) return;
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    const v = n.voice && speechSynthesis.getVoices().find((x) => x.name === n.voice);
-    if (v) u.voice = v; else u.lang = 'id-ID';
-    u.rate = Math.max(0.5, Math.min(2, Number(n.rate) || 1));
-    speechSynthesis.speak(u);
-  } catch (_) {}
-}
-
 /* ---------- notifikasi di island ---------- */
 function notify(a) {
   if (a.id && P.alert && P.alert.id === a.id) {
@@ -106,7 +88,6 @@ function nextAlert() {
   if (P.alert) {
     paintAlert(); armAlert(); P.lastActive = Date.now();
     if (P.alert.sound) chime(P.alert.sound);
-    speak(P.alert);
   }
   render();
 }

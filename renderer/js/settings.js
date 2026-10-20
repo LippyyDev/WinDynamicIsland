@@ -85,46 +85,6 @@ $('#nav').addEventListener('click', (e) => {
 
 $('#openData').onclick = () => api.dataFolder();
 
-/* ---------- suara notifikasi ---------- */
-function loadVoices() {
-  const sel = $('#voiceSel'); if (!sel || !window.speechSynthesis) return;
-  const vs = speechSynthesis.getVoices();
-  if (!vs.length || sel.options.length > 1) return;
-  for (const v of vs) { const o = document.createElement('option'); o.value = v.name; o.textContent = `${v.name} (${v.lang})`; sel.appendChild(o); }
-  if (S) fill();
-}
-if (window.speechSynthesis) { speechSynthesis.onvoiceschanged = loadVoices; loadVoices(); }
-$('#voiceTest').onclick = () => {
-  if (!window.speechSynthesis) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance('Mengisi daya. Pengisi daya tersambung.');
-  const v = speechSynthesis.getVoices().find((x) => x.name === $('#voiceSel').value);
-  if (v) u.voice = v; else u.lang = 'id-ID';
-  u.rate = Number(S && S.notify.rate) || 1;
-  speechSynthesis.speak(u);
-};
-
-/* ---------- agen AI ---------- */
-async function keyRefresh() {
-  const has = await api.agentKeyHas();
-  $('#keyState').textContent = has ? 'Tersimpan terenkripsi di PC ini. Tidak bisa ditampilkan lagi; simpan kunci baru untuk menggantinya.' : 'Belum disimpan. Disimpan terenkripsi di PC ini dan tidak pernah ditampilkan lagi.';
-}
-$('#keySave').onclick = async () => {
-  const f = $('#agentKey'), r = await api.agentKeySet(f.value);
-  if (r.ok) { f.value = ''; toast('Kunci tersimpan'); } else toast(r.error);
-  keyRefresh();
-};
-$('#keyClear').onclick = async () => { await api.agentKeyClear(); toast('Kunci dihapus'); keyRefresh(); };
-$('#testBtn').onclick = async () => {
-  const b = $('#testBtn'), t = $('#testState');
-  b.disabled = true; t.textContent = 'Menguji…';
-  const r = await api.agentTest();
-  t.textContent = r.ok ? `Berhasil dalam ${r.ms} ms. Balasan model: "${r.reply}". Kemampuan gambar belum terbukti; coba satu tugas di jendela agen.` : 'Gagal: ' + r.error;
-  b.disabled = false;
-};
-$('#openAgent').onclick = () => api.openAgent();
-keyRefresh();
-
 /* ---------- penampil log ---------- */
 const escH = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 const fmtSize = (b) => (b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(2) + ' MB');

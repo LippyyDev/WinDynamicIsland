@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, shell, dialog, session, nativeTheme, globalShortcut, safeStorage } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, shell, dialog, session, nativeTheme } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
@@ -7,12 +7,11 @@ const { Store } = require('./store');
 const { Logger } = require('./logger');
 const { AppBar } = require('./appbar');
 const desktop = require('./desktop');
-const { Agent } = require('./agent');
 
 if (!app.requestSingleInstanceLock()) { app.quit(); }
 
 const H = 300;
-let win = null, settingsWin = null, agentWin = null, tray = null, store = null, appbar = null;
+let win = null, settingsWin = null, tray = null, store = null, appbar = null;
 let ps = null, cmdPs = null, quitting = false;
 let barImgUri = '', forceStrip = false;     // irisan wallpaper di belakang bilah untuk efek Blur
 let hitRects = [], inside = false, hitId = null, wantCursor = false;
@@ -128,70 +127,6 @@ function openSettings() {
   settingsWin.once('ready-to-show', () => settingsWin.show());
 }
 
-/* ---------------- Agen AI ---------------- */
-// Kunci API dienkripsi dengan DPAPI Windows (safeStorage) dan tidak pernah dikirim ke jendela antarmuka.
-function agentKey() {
-  try {
-    const k = store.get('agentKey');
-    if (!k || !k.v) return '';
-    return k.enc ? safeStorage.decryptString(Buffer.from(k.v, 'base64')) : '';
-  } catch (e) { log.warn('agen', 'Kunci API tidak bisa dibaca: ' + e.message); return ''; }
-}
-const STOP_KEY = 'Control+Alt+X', OPEN_KEY = 'Control+Alt+A';
-const agent = new Agent({
-  settings: () => store.get('settings'),
-  key: agentKey,
-  emit: (evt) => {
-    if (agentWin && !agentWin.isDestroyed()) agentWin.webContents.send('agent-event', evt);
-    if (evt.type === 'status' && win && !win.isDestroyed()) win.webContents.send('agent-status', { phase: evt.phase, title: evt.title, sub: evt.sub });
-    if (evt.type === 'log') log.write(evt.level === 'error' ? 'ERROR' : evt.level === 'warn' ? 'WARN' : 'INFO', 'agen', evt.text);
-  },
-  onRunning: (on) => {
-    if (on) {
-      if (!globalShortcut.register(STOP_KEY, () => agent.stop('Dihentikan dengan pintasan ' + STOP_KEY))) log.warn('agen', 'Pintasan berhenti darurat gagal didaftarkan');
-    } else globalShortcut.unregister(STOP_KEY);
-  }
-});
-function openAgent() {
-  if (agentWin && !agentWin.isDestroyed()) { agentWin.show(); agentWin.focus(); return; }
-  const wa = screen.getPrimaryDisplay().workArea;
-  agentWin = new BrowserWindow({
-    width: 440, height: 640, x: wa.x + wa.width - 460, y: wa.y + wa.height - 660, minWidth: 360, minHeight: 440,
-    title: 'Agen Pulau', icon: ICON, backgroundColor: '#0c0c0f', show: false, alwaysOnTop: true,
-    autoHideMenuBar: true, titleBarStyle: 'hidden', titleBarOverlay: { color: '#0c0c0f', symbolColor: '#d8d8de', height: 40 },
-    webPreferences: { preload: PRELOAD, contextIsolation: true, nodeIntegration: false }
-  });
-  agentWin.setContentProtection(true); // jendela ini tidak ikut terekam di tangkapan layar agen
-  agentWin.loadFile(path.join(__dirname, 'renderer', 'agent.html'));
-  agentWin.once('ready-to-show', () => agentWin.show());
-  log.info('agen', 'Jendela agen dibuka');
-}
-function syncAgentShortcut() {
-  const want = !!(store.get('settings') || {}).agentEnabled;
-  globalShortcut.unregister(OPEN_KEY);
-  if (want && !globalShortcut.register(OPEN_KEY, openAgent)) log.warn('agen', 'Pintasan ' + OPEN_KEY + ' tidak bisa didaftarkan (dipakai aplikasi lain)');
-  if (!want && agent.running) agent.stop('Agen AI dimatikan di pengaturan');
-}
-ipcMain.on('open-agent', openAgent);
-ipcMain.handle('agent-state', () => agent.state());
-ipcMain.handle('agent-start', (_e, goal) => { log.info('agen', 'Mulai tugas'); return agent.run(goal); });
-ipcMain.on('agent-stop', () => agent.stop());
-ipcMain.on('agent-answer', (_e, id, v) => agent.answer(String(id), v));
-ipcMain.handle('agent-key-has', () => !!agentKey());
-ipcMain.handle('agent-key-set', (_e, k) => {
-  k = String(k || '').trim();
-  if (!k) return { ok: false, error: 'Kunci kosong' };
-  if (!safeStorage.isEncryptionAvailable()) return { ok: false, error: 'Enkripsi Windows tidak tersedia, kunci tidak disimpan' };
-  store.set('agentKey', { enc: true, v: safeStorage.encryptString(k).toString('base64') });
-  store.flush();
-  log.info('agen', 'Kunci API disimpan (terenkripsi)');
-  return { ok: true };
-});
-ipcMain.handle('agent-key-clear', () => { store.set('agentKey', null); store.flush(); log.info('agen', 'Kunci API dihapus'); return { ok: true }; });
-ipcMain.handle('agent-test', async () => {
-  try { return await agent.test(); } catch (e) { return { ok: false, error: e.message }; }
-});
-
 /* ---------------- jembatan PowerShell ---------------- */
 const psScript = () => app.isPackaged ? path.join(process.resourcesPath, 'media.ps1') : path.join(__dirname, 'media.ps1');
 
@@ -298,7 +233,6 @@ function onSettingsChanged(next) {
   const prev = lastSettings || {};
   lastSettings = JSON.parse(JSON.stringify(next));
   log.setLevel(next.logLevel);
-  if (prev.agentEnabled !== next.agentEnabled) syncAgentShortcut();
   if (prev.notch !== next.notch || prev.barHeight !== next.barHeight) applyNotch();
   if (prev.notch !== next.notch || prev.barHeight !== next.barHeight || prev.barEffect !== next.barEffect) forceStrip = true;
   if (JSON.stringify([prev.barColor, prev.barEffect, prev.mb, prev.menubar, prev.notch]) !== JSON.stringify([next.barColor, next.barEffect, next.mb, next.menubar, next.notch])) { fgKey = ''; pollEnv(); }
@@ -316,7 +250,6 @@ ipcMain.on('logo-menu', (_e, x, y) => {
     { label: 'Tentang Pulau ' + app.getVersion(), click: () => openSettings() },
     { type: 'separator' },
     { label: 'Pengaturan Pulau…', click: openSettings },
-    ...((store.get('settings') || {}).agentEnabled ? [{ label: 'Agen AI…', click: openAgent }] : []),
     { label: 'Pengaturan Windows', click: () => shell.openExternal('ms-settings:') },
     { label: 'Task Manager', click: () => run('taskmgr.exe', []) },
     { type: 'separator' },
@@ -330,10 +263,8 @@ ipcMain.on('logo-menu', (_e, x, y) => {
 });
 ipcMain.handle('bar-img-get', () => barImgUri);
 ipcMain.on('want-cursor', (_e, v) => { wantCursor = !!v; });
-// kunci API tidak boleh dibaca atau ditimpa dari jendela antarmuka
-ipcMain.handle('store-get', (_e, k) => (k && k !== 'agentKey' ? store.get(k) : null));
+ipcMain.handle('store-get', (_e, k) => store.get(k));
 ipcMain.on('store-set', (e, k, v) => {
-  if (k === 'agentKey') return;
   store.set(k, v);
   if (k === 'settings') onSettingsChanged(v);
   for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed() && w.webContents !== e.sender) w.webContents.send('store-changed', k, v);
@@ -553,12 +484,10 @@ app.whenReady().then(() => {
   if (!desktop.available()) log.warn('bilah', 'Info desktop tidak tersedia: ' + desktop.error());
   startMedia();
   startCmd();
-  syncAgentShortcut();
 });
 
 app.on('before-quit', () => {
   quitting = true;
-  try { agent.stop('Pulau ditutup'); globalShortcut.unregisterAll(); } catch (_) {}
   log.info('app', 'Pulau ditutup');
   if (appbar) appbar.remove();
   if (store) store.flush();

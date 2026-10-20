@@ -8,12 +8,6 @@ const DEFAULTS = {
     lyricsCompact: true,
     artColor: true,
     artOnline: true,
-    agentEnabled: false,
-    agentBase: 'https://api.aivene.com/v1',
-    agentModel: 'gpt-4o',
-    agentConfirm: 'ask',
-    agentMaxSteps: 25,
-    agentShotW: 1280,
     autoWidth: true,
     maxW: 400,
     idleItems: ['auto'],
@@ -35,7 +29,7 @@ const DEFAULTS = {
     pages: { music: true, pomodoro: true, water: true, shelf: true, todo: true },
     pomo: { focus: 25, short: 5, long: 15, every: 4, sound: true, autoNext: false },
     water: { remind: true, goal: 2000, cup: 250, interval: 60, start: 8, end: 22 },
-    notify: { charging: true, lowBattery: true, lowAt: 20, headphones: true, caps: true, volume: true, todo: true, speak: false, voice: '', rate: 1 }
+    notify: { charging: true, lowBattery: true, lowAt: 20, headphones: true, caps: true, volume: true, todo: true }
   },
   todos: [],
   water: { log: {}, lastDrink: 0, lastRemind: 0 },

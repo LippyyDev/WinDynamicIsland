@@ -73,11 +73,6 @@ label.row { cursor: pointer; }
 
 .row.hidden { display: none; }
 
-.card.warn { border-color: rgba(255, 181, 71, .4); background: rgba(255, 181, 71, .06); }
-.inline { display: flex; gap: 8px; align-items: center; }
-.btn { height: 32px; padding: 0 14px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, .14); background: #1d1d25; color: #fff; font-weight: 600; cursor: pointer; }
-.btn:hover { border-color: rgba(255, 255, 255, .3); }
-.btn:disabled { opacity: .5; cursor: default; }
 .row.col { flex-direction: column; align-items: stretch; gap: 10px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { height: 30px; padding: 0 13px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, .12); background: #1d1d25; color: var(--txt2, #ccc); font: inherit; font-weight: 600; font-size: 12.5px; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }

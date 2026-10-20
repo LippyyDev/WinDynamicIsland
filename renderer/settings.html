@@ -20,44 +20,12 @@
     <a data-s="pomodoro"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.2 1.6M9.5 2.5h5"/></svg>Pomodoro</a>
     <a data-s="minum"><svg viewBox="0 0 24 24"><path d="M12 3.5s6 6.4 6 10.5a6 6 0 0 1-12 0c0-4.1 6-10.5 6-10.5Z"/></svg>Minum Air</a>
     <a data-s="notif"><svg viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg>Notifikasi</a>
-    <a data-s="agen"><svg viewBox="0 0 24 24"><rect x="4.5" y="8" width="15" height="11" rx="3"/><path d="M12 4v4M9 13v1.5M15 13v1.5"/><circle cx="12" cy="3.6" r="1"/></svg>Agen AI</a>
     <a data-s="data"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="2.8"/><path d="M4.5 6v12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8"/></svg>Data</a>
   </nav>
   <div class="side-foot">Semua data tersimpan di PC ini.</div>
 </aside>
 
 <main id="main">
-  <!-- AGEN AI -->
-  <section data-s="agen">
-    <h1>Agen AI</h1>
-    <p class="lead">Biarkan model AI (misalnya lewat Aivene) mengendalikan komputer Anda atas perintah Anda. Eksperimental.</p>
-    <div class="card warn">
-      <div class="row"><div><b>Pahami risikonya</b><span>Agen bisa mengklik, mengetik, dan menekan tombol di komputer ini seolah-olah Anda sendiri. Awasi saat bekerja, jangan biarkan di jendela yang berisi data sensitif, dan jangan buka halaman yang tidak Anda percayai. Teks di layar dapat mencoba menipu model. Tombol berhenti darurat: <b style="display:inline">Ctrl+Alt+X</b>.</span></div></div>
-    </div>
-    <div class="card">
-      <label class="row"><div><b>Aktifkan agen AI</b><span>Mati secara bawaan. Bila aktif, <b style="display:inline">Ctrl+Alt+A</b> membuka jendela agen dan menu logo pulau mendapat item Agen AI.</span></div><input type="checkbox" class="sw" data-k="agentEnabled"></label>
-      <div class="row"><div><b>URL API</b><span>Alamat API yang kompatibel dengan OpenAI. Untuk Aivene: https://api.aivene.com/v1</span></div><input type="text" class="sel" data-k="agentBase" maxlength="200" style="width:260px;cursor:text"></div>
-      <div class="row"><div><b>ID model</b><span>Salin ID model dari katalog penyedia (bukan nama tampilan). Model harus mendukung gambar dan pemanggilan fungsi.</span></div><input type="text" class="sel" data-k="agentModel" maxlength="100" style="width:200px;cursor:text"></div>
-      <div class="row"><div><b>Kunci API</b><span id="keyState">Belum disimpan. Disimpan terenkripsi di PC ini dan tidak pernah ditampilkan lagi.</span></div>
-        <div class="inline"><input type="password" class="sel" id="agentKey" placeholder="isk-…" autocomplete="off" style="width:170px;cursor:text"><button class="btn" id="keySave">Simpan</button><button class="btn" id="keyClear">Hapus</button></div></div>
-    </div>
-    <h2>Keamanan</h2>
-    <div class="card">
-      <div class="row"><div><b>Minta izin untuk</b><span>Setiap aksi di bawah ini muncul di jendela agen dan di pulau, menunggu Anda menyetujui. Standar: mengetik, menekan tombol, dan membuka file. Semua aksi: klik juga. Tanpa izin: berbahaya, agen jalan sendiri.</span></div>
-        <select class="sel" data-k="agentConfirm">
-          <option value="ask">Mengetik, tombol, buka file</option>
-          <option value="all">Semua aksi</option>
-          <option value="none">Tanpa izin (berbahaya)</option>
-        </select></div>
-      <div class="row"><div><b>Batas langkah</b><span>Agen berhenti sendiri setelah sekian langkah, supaya biaya tidak membengkak.</span></div><span class="num"><input type="number" data-k="agentMaxSteps" min="3" max="100" step="1"><em>langkah</em></span></div>
-      <div class="row"><div><b>Lebar tangkapan layar</b><span>Makin kecil makin hemat token, tetapi teks kecil sulit dibaca model.</span></div><span class="num"><input type="number" data-k="agentShotW" min="640" max="1920" step="64"><em>px</em></span></div>
-    </div>
-    <h2>Uji</h2>
-    <div class="card">
-      <div class="row"><div><b>Uji koneksi</b><span id="testState">Mengirim satu pesan singkat ke model (biaya sangat kecil).</span></div><div class="inline"><button class="btn" id="testBtn">Uji</button><button class="btn" id="openAgent">Buka jendela agen</button></div></div>
-    </div>
-  </section>
-
   <!-- UMUM -->
   <section data-s="umum" class="on">
     <h1>Umum</h1>
@@ -169,13 +137,6 @@
       <label class="row"><div><b>Caps Lock</b></div><input type="checkbox" class="sw" data-k="notify.caps"></label>
       <label class="row"><div><b>Volume</b><span>Saat volume diubah atau dibisukan.</span></div><input type="checkbox" class="sw" data-k="notify.volume"></label>
       <label class="row"><div><b>Pengingat tugas</b><span>Saat jam pengingat tugas tiba.</span></div><input type="checkbox" class="sw" data-k="notify.todo"></label>
-    </div>
-    <h2>Suara</h2>
-    <div class="card">
-      <label class="row"><div><b>Bacakan notifikasi</b><span>Judul notifikasi diucapkan dengan suara bawaan Windows (gratis, tanpa internet). Volume dan Caps Lock tidak dibacakan.</span></div><input type="checkbox" class="sw" data-k="notify.speak"></label>
-      <div class="row" data-when="notify.speak=true"><div><b>Suara</b><span>Daftar suara yang terpasang di Windows. Tambah suara lain di Pengaturan Windows, Waktu dan bahasa, Ucapan.</span></div>
-        <div class="inline"><select class="sel" data-k="notify.voice" id="voiceSel"><option value="">Bawaan sistem</option></select><button class="btn" id="voiceTest">Coba</button></div></div>
-      <label class="row" data-when="notify.speak=true"><div><b>Kecepatan</b></div><span class="num"><input type="number" data-k="notify.rate" min="0.5" max="2" step="0.1"><em>x</em></span></label>
     </div>
   </section>
 
