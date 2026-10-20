@@ -20,6 +20,7 @@
 | Tampilan saat diam | Isi pulau saat tidak ada musik atau notifikasi bisa dipilih lebih dari satu dan tampil berdampingan: jam, tanggal, teks kustom (maks. 16 karakter), baterai, napas, gelombang, titik kamera, atau mata. Kosongkan semua untuk pulau polos. Ada pilihan kedua yang menggantikannya setelah beberapa saat tanpa aktivitas (bawaan: mata yang mengikuti kursor). |
 | Mode *notch* | Area atas layar dicadangkan seperti *notch* MacBook, jadi jendela yang dimaksimalkan tidak tertutup pulau. Bilah hitam penuh, tinggi bilah dapat diatur, pulau otomatis sembunyi saat layar penuh. |
 | Bilah menu | Seperti macOS: logo dengan menu cepat, aplikasi aktif dan judul jendela di kiri, Wi-Fi, volume, baterai, tanggal dan jam di kanan. Warna bilah Otomatis mengikuti bagian atas jendela yang aktif (wallpaper saat di desktop), atau Ikuti tema sistem (hitam atau putih). Efek latar dipilih terpisah: Padat, Blur (hanya saat desktop terlihat; wallpaper dikaburkan dan diberi tinta; kekuatan blur 0 sampai 100% dengan 0% berarti transparan, dan kepekatan warna diatur terpisah), atau Transparan. |
+| Asisten suara | Tekan *shortcut* (bawaan Ctrl+Alt+Spasi) atau tombol mikrofon di pulau, bicara, lalu diam sebentar. Ucapan disalin, dijawab model AI, dan dibacakan dengan suara lewat API Aivene (atau API lain yang kompatibel dengan OpenAI). Model percakapan, transkripsi, dan suara dipilih dari *dropdown* yang diisi dari akun Anda. Hanya mengobrol, tanpa kendali komputer. Mati secara bawaan. |
 | Log aktivitas | Tiga level: Mati, Hanya galat, Semua aktivitas. Ada penampil log di Pengaturan. |
 | Pengaturan | Jendela khusus untuk semua opsi, termasuk menyalakan atau mematikan tiap halaman. |
 
@@ -51,6 +52,7 @@ Persyaratan: Windows 10 atau 11 (64 bit). Lirik dan sampul cadangan membutuhkan 
 
 * Arahkan kursor ke kapsul untuk membukanya. Geser halaman dengan panah kiri kanan, titik di bawah, atau *scroll*.
 * Klik ikon gerigi di pojok kanan atas, atau klik ikon *tray*, untuk membuka Pengaturan.
+* Bila asisten suara aktif, tekan **Ctrl+Alt+Spasi** lalu bicara. Pulau menjawab setelah Anda diam selama jeda yang diatur (bawaan 1,5 detik). Tekan lagi untuk langsung mengirim atau menghentikan jawaban.
 * Klik kanan ikon *tray* untuk menampilkan atau menyembunyikan pulau, mengatur *autostart*, membuka log, atau keluar.
 
 ## Pengembangan
@@ -75,10 +77,11 @@ preload.js       API aman yang diekspos ke antarmuka
 store.js         penyimpanan lokal (satu file JSON)
 logger.js        pencatat aktivitas dan galat
 appbar.js        mode notch lewat AppBar Windows (koffi + shell32)
+ai.js            asisten suara: transkripsi, percakapan, dan TTS lewat API kompatibel OpenAI
 desktop.js       aplikasi aktif, warna wallpaper, warna bagian atas jendela aktif (koffi + user32/gdi32/dwmapi)
 media.ps1        pembaca media, volume, dan Caps Lock Windows
 renderer/        antarmuka pulau dan jendela pengaturan
-  js/            modul per fitur (music, pomodoro, water, shelf, todo, system)
+  js/            modul per fitur (music, pomodoro, water, shelf, todo, system, voice)
 docs/            PRD, arsitektur, roadmap
 ```
 
@@ -88,6 +91,7 @@ docs/            PRD, arsitektur, roadmap
 * Log disimpan di `%APPDATA%\Pulau\pulau.log` dan tidak pernah dikirim ke mana pun. Pada level Semua aktivitas, log memuat judul lagu dan teks tugas.
 * Tidak ada akun, analitik, atau pelacakan.
 * Permintaan jaringan hanya dua: pencarian lirik ke LRCLIB (judul, nama artis, nama album, durasi) dan, bila Windows tidak menyediakan sampul, pencarian sampul ke iTunes Search (judul dan nama artis). Pencarian sampul dapat dimatikan di Pengaturan, bagian Musik.
+* Asisten suara (mati secara bawaan) mengirim rekaman ucapan, teks pertanyaan, dan jawaban ke penyedia API yang Anda atur. Mikrofon hanya menyala setelah Anda menekan *shortcut* atau tombol mikrofon. Kunci API disimpan terenkripsi lewat `safeStorage` Windows dan tidak pernah dikirim ke antarmuka. Riwayat obrolan hanya ada di memori dan dilupakan setelah 5 menit.
 
 ## Pemecahan masalah
 
@@ -98,6 +102,9 @@ docs/            PRD, arsitektur, roadmap
 * **Blur tampak polos:** di belakang bilah hanya ada wallpaper, jadi blur terlihat paling jelas pada wallpaper yang bermotif. Naikkan **Kekuatan blur** untuk kabur lebih kuat, atau kecilkan **Kepekatan warna** bila tinta terlalu menutupi. Di log, baris `[bilah] Irisan wallpaper untuk blur siap` menandakan wallpaper berhasil dibaca.
 * **Warna bilah tidak mengikuti jendela aktif:** di log Semua aktivitas, cari baris `[bilah] Warna <aplikasi>`. Isinya warna yang terbaca atau alasan gagal (misalnya `BitBlt gagal`), plus koordinat jendela dan baris yang dibaca. Kirim baris itu ke *issue*.
 * **Ingin memastikan tidak ada kebocoran memori:** dengan log Semua aktivitas, baris `[kinerja]` dicatat tiap 10 menit berisi total memori dan CPU semua proses Pulau, plus rincian per proses (pulau, pengaturan, blur, GPU). Angka yang terus naik selama berjam-jam menandakan kebocoran, dan Pulau sendiri mencatat peringatan bila memori naik lebih dari dua kali lipat.
+* **Asisten suara berkata mikrofon tidak bisa dipakai:** buka Pengaturan Windows > Privasi dan keamanan > Mikrofon, lalu nyalakan **Izinkan aplikasi desktop mengakses mikrofon**.
+* **Asisten berhenti sebelum saya selesai bicara:** naikkan **Jeda diam sebelum menjawab** di Pengaturan > Asisten Suara.
+* **Shortcut asisten tidak bereaksi:** kemungkinan dipakai aplikasi lain; pulau akan memberi tahu. Pilih *shortcut* lain di Pengaturan.
 * **Pengingat atau notifikasi tidak muncul:** periksa pengaturan **Notifikasi**.
 * **Peringatan SmartScreen:** lihat bagian Instalasi.
 

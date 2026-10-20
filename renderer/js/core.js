@@ -42,7 +42,8 @@ const G = {
   check: '<svg class="glyph" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
   timer: '<svg class="glyph" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.2 1.6M9.5 2.5h5"/></svg>',
   bell: '<svg class="glyph" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg>',
-  file: '<svg class="glyph" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg>'
+  file: '<svg class="glyph" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg>',
+  mic: '<svg class="glyph" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11.5" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>'
 };
 function ringIcon(frac, color, glyph) {
   const c = 2 * Math.PI * 17;
@@ -183,7 +184,8 @@ function render() {
   if (!pages.includes(P.page)) P.page = pages[0];
 
   let mode;
-  if (P.hover) mode = 'expanded';
+  if (typeof V !== 'undefined' && V.state) mode = 'voice';
+  else if (P.hover) mode = 'expanded';
   else if (P.alert) mode = 'alert';
   else if (buildCompact()) mode = 'compact';
   else mode = 'idle';
@@ -206,6 +208,7 @@ function render() {
   let w = 150, h = notch ? barH : 32;
   if (mode === 'expanded') { w = P.mods[P.page].width(); h = 190; }
   else if (mode === 'alert') { w = autoW() ? fitAlert() : P.alert.w || 380; h = Math.max(P.alert.h || 64, notch ? barH : 0); }
+  else if (mode === 'voice') { const d = voiceSize(); w = d.w; h = d.h; }
   else if (mode === 'compact') { w = autoW() ? fitCompact() : P.compactW; P.compactW = w; h = notch ? barH : 38; }
   else if (idle.length) { w = idleWidth(idle); }
   island.style.width = w + 'px';
@@ -229,6 +232,7 @@ function render() {
   }
   $$('#dots i').forEach((d) => d.classList.toggle('on', d.dataset.p === P.page));
   $('#navPrev').hidden = $('#navNext').hidden = pages.length < 2;
+  $('#bMic').hidden = !P.S.aiEnabled;
 
   for (const m of Object.values(P.mods)) m.decorate && m.decorate(mode, w);
   sendRect();

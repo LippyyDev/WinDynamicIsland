@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, shell, dialog, session, nativeTheme } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, shell, dialog, session, nativeTheme, globalShortcut } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
@@ -7,6 +7,7 @@ const { Store } = require('./store');
 const { Logger } = require('./logger');
 const { AppBar } = require('./appbar');
 const desktop = require('./desktop');
+const { AI } = require('./ai');
 
 if (!app.requestSingleInstanceLock()) { app.quit(); }
 
@@ -21,6 +22,8 @@ let winColor = null, fgKey = '', sampleTimer = null, lastSample = 0, sampleRuns 
 let tintKey = '', clipKey = '';
 let userHidden = false, fullscreenHidden = false;
 let lastSettings = null;
+let ai = null, voiceKeyOn = '';
+const SECRET = new Set(['aiKey', 'agentKey']); // tidak pernah dikirim ke antarmuka
 
 const ICON = path.join(__dirname, 'assets', 'icon.png');
 const PRELOAD = path.join(__dirname, 'preload.js');
@@ -44,7 +47,7 @@ function createWindow() {
     x: b.x, y: b.y, width: b.width, height: H,
     frame: false, transparent: true, resizable: false, movable: false, minimizable: false, maximizable: false,
     skipTaskbar: true, alwaysOnTop: true, hasShadow: false, show: false, backgroundColor: '#00000000',
-    webPreferences: { preload: PRELOAD, contextIsolation: true, nodeIntegration: false, backgroundThrottling: false }
+    webPreferences: { preload: PRELOAD, contextIsolation: true, nodeIntegration: false, backgroundThrottling: false, autoplayPolicy: 'no-user-gesture-required' }
   });
   win.setAlwaysOnTop(true, 'screen-saver');
   win.setVisibleOnAllWorkspaces(true);
@@ -233,6 +236,8 @@ function onSettingsChanged(next) {
   const prev = lastSettings || {};
   lastSettings = JSON.parse(JSON.stringify(next));
   log.setLevel(next.logLevel);
+  if (prev.aiEnabled !== next.aiEnabled || prev.aiShortcut !== next.aiShortcut) syncVoiceKey();
+  if (prev.aiEnabled !== next.aiEnabled && tray) rebuildTray();
   if (prev.notch !== next.notch || prev.barHeight !== next.barHeight) applyNotch();
   if (prev.notch !== next.notch || prev.barHeight !== next.barHeight || prev.barEffect !== next.barEffect) forceStrip = true;
   if (JSON.stringify([prev.barColor, prev.barEffect, prev.mb, prev.menubar, prev.notch]) !== JSON.stringify([next.barColor, next.barEffect, next.mb, next.menubar, next.notch])) { fgKey = ''; pollEnv(); }
@@ -250,6 +255,7 @@ ipcMain.on('logo-menu', (_e, x, y) => {
     { label: 'Tentang Pulau ' + app.getVersion(), click: () => openSettings() },
     { type: 'separator' },
     { label: 'Pengaturan Pulau…', click: openSettings },
+    ...(store.get('settings').aiEnabled ? [{ label: 'Tanya Pulau (suara)', click: () => triggerVoice('menu logo') }] : []),
     { label: 'Pengaturan Windows', click: () => shell.openExternal('ms-settings:') },
     { label: 'Task Manager', click: () => run('taskmgr.exe', []) },
     { type: 'separator' },
@@ -263,8 +269,9 @@ ipcMain.on('logo-menu', (_e, x, y) => {
 });
 ipcMain.handle('bar-img-get', () => barImgUri);
 ipcMain.on('want-cursor', (_e, v) => { wantCursor = !!v; });
-ipcMain.handle('store-get', (_e, k) => store.get(k));
+ipcMain.handle('store-get', (_e, k) => (SECRET.has(k) ? null : store.get(k)));
 ipcMain.on('store-set', (e, k, v) => {
+  if (SECRET.has(k)) return;
   store.set(k, v);
   if (k === 'settings') onSettingsChanged(v);
   for (const w of BrowserWindow.getAllWindows()) if (!w.isDestroyed() && w.webContents !== e.sender) w.webContents.send('store-changed', k, v);
@@ -298,6 +305,42 @@ ipcMain.on('data-reset', () => {
   onSettingsChanged(store.get('settings'));
 });
 ipcMain.handle('version', () => app.getVersion());
+
+/* ---------------- asisten suara (Aivene) ---------------- */
+const aiCall = (fn) => async (...a) => {
+  try { return { ok: true, value: await fn(...a) }; }
+  catch (e) { if (e.message !== 'Dibatalkan') log.warn('asisten', e.message); return { ok: false, error: e.message }; }
+};
+ipcMain.handle('ai-key-has', () => ai.hasKey());
+ipcMain.handle('ai-key-set', (_e, k) => ai.setKey(k));
+ipcMain.on('ai-key-clear', () => ai.clearKey());
+ipcMain.handle('ai-models', aiCall(() => ai.models()));
+ipcMain.handle('ai-transcribe', aiCall((_e, bytes, mime) => ai.transcribe(bytes, mime)));
+ipcMain.handle('ai-chat', aiCall((_e, history) => ai.chat(Array.isArray(history) ? history : [])));
+ipcMain.handle('ai-speech', aiCall((_e, text) => ai.speech(String(text || ''))));
+ipcMain.on('ai-cancel', () => ai.cancel());
+ipcMain.on('voice-trigger', () => triggerVoice('tombol'));
+
+function triggerVoice(src) {
+  if (!win || win.isDestroyed()) return;
+  log.info('asisten', 'Dipicu lewat ' + src);
+  win.webContents.send('voice-trigger');
+}
+function syncVoiceKey() {
+  const s = store.get('settings');
+  const want = s.aiEnabled ? String(s.aiShortcut || 'Control+Alt+Space') : '';
+  if (want === voiceKeyOn) return;
+  if (voiceKeyOn) { try { globalShortcut.unregister(voiceKeyOn); } catch (_) {} }
+  voiceKeyOn = '';
+  if (!want) return;
+  let ok = false;
+  try { ok = globalShortcut.register(want, () => triggerVoice('shortcut')); } catch (e) { log.warn('asisten', 'Shortcut tidak valid: ' + want); }
+  if (ok) { voiceKeyOn = want; log.info('asisten', 'Shortcut aktif: ' + want); }
+  else {
+    log.warn('asisten', 'Shortcut ' + want + ' sudah dipakai aplikasi lain');
+    if (win && !win.isDestroyed()) win.webContents.send('voice-shortcut-fail', want);
+  }
+}
 
 // log
 ipcMain.on('log', (_e, level, src, msg) => log.write(String(level || 'INFO').toUpperCase(), src, msg));
@@ -416,6 +459,7 @@ function rebuildTray() {
     { label: 'Pulau ' + app.getVersion(), enabled: false },
     { type: 'separator' },
     { label: 'Pengaturan…', click: openSettings },
+    ...(store.get('settings').aiEnabled ? [{ label: 'Tanya Pulau (suara)', click: () => triggerVoice('tray') }] : []),
     { label: 'Tampilkan pulau', type: 'checkbox', checked: !userHidden, click: (i) => setVisible(i.checked) },
     {
       label: 'Jalankan saat Windows mulai', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin,
@@ -457,6 +501,15 @@ app.whenReady().then(() => {
       if (typeof s.idleAlt === 'string') s.idleAltItems = s.idleAlt === 'same' || s.idleAlt === 'none' ? [] : [s.idleAlt];
       delete s.idleStyle; delete s.idleAlt; s._migrated051 = true; store.set('settings', s);
     } }
+  // 0.8.0: kunci Aivene dari agen lama (0.6.x/0.7.0) dipakai ulang untuk asisten suara; pengaturan agen dibuang
+  { const s = store.get('settings');
+    if (!s._migrated080) {
+      if (!store.get('aiKey') && store.get('agentKey')) store.set('aiKey', store.get('agentKey'));
+      if (s.agentBase && !s.aiBase) s.aiBase = s.agentBase;
+      for (const k of Object.keys(s)) if (/^agent/.test(k)) delete s[k];
+      s._migrated080 = true; store.set('settings', s);
+    }
+    if (store.get('agentKey') !== undefined) { delete store.data.agentKey; store.queue(); } }
   lastSettings = JSON.parse(JSON.stringify(store.get('settings')));
   log.setLevel(lastSettings.logLevel);
   log.info('app', `Pulau ${app.getVersion()} dimulai (Electron ${process.versions.electron}, Windows ${process.getSystemVersion ? process.getSystemVersion() : ''})`);
@@ -474,8 +527,10 @@ app.whenReady().then(() => {
     const flag = path.join(app.getPath('userData'), '.init');
     if (!fs.existsSync(flag)) { app.setLoginItemSettings({ openAtLogin: true }); try { fs.writeFileSync(flag, '1'); } catch (_) {} }
   }
+  ai = new AI({ store, log });
   createWindow();
   buildTray();
+  win.webContents.once('did-finish-load', syncVoiceKey);
   pollCursor();
   setInterval(() => pollEnv(false), 1000);
   setTimeout(perfLog, 60 * 1000);
@@ -489,6 +544,8 @@ app.whenReady().then(() => {
 app.on('before-quit', () => {
   quitting = true;
   log.info('app', 'Pulau ditutup');
+  try { globalShortcut.unregisterAll(); } catch (_) {}
+  if (ai) ai.cancel();
   if (appbar) appbar.remove();
   if (store) store.flush();
   for (const p of [ps, cmdPs]) if (p) { try { p.stdin.end(); p.kill(); } catch (_) {} }

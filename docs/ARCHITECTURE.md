@@ -109,6 +109,7 @@ Tanpa kerangka kerja. Satu objek global `P` menampung state dan modul.
 | `js/todo.js` | Daftar tugas dan pengingat jam. |
 | `js/system.js` | Baterai (Battery API), perangkat audio (`enumerateDevices`), Caps Lock dan volume. |
 | `js/boot.js` | Memuat data, memulai modul, menghubungkan IPC. |
+| `js/voice.js` | Asisten suara: mikrofon (`getUserMedia` + `MediaRecorder` webm/opus), deteksi diam berbasis RMS dengan lantai derau adaptif, pemutar jawaban, animasi *orb* dan batang. |
 | `js/settings.js` | Logika jendela Pengaturan. |
 
 Setiap modul mengekspos antarmuka kecil: `title`, `width()`, `init()`, `onShow()`, `onData(key)`, `decorate(mode)`.
@@ -121,14 +122,24 @@ Setiap modul mengekspos antarmuka kecil: `title`, `width()`, `init()`, `onShow()
 | `compact` | 340 x 38 | musik atau timer berjalan |
 | `alert` | sesuai notifikasi | ada notifikasi di antrean |
 | `expanded` | 560 sampai 800 x 190 | kursor di atas kapsul |
+| `voice` | 300 sampai lebar maksimal x 60 sampai 115 | asisten suara aktif |
 
-Urutan prioritas: `expanded`, `alert`, `compact`, `idle`. Transisi memakai CSS (`cubic-bezier` berpegas) dan sudut luar melengkung dibuat dengan `radial-gradient` supaya kapsul menyatu dengan tepi layar.
+Urutan prioritas: `voice`, `expanded`, `alert`, `compact`, `idle`. Transisi memakai CSS (`cubic-bezier` berpegas) dan sudut luar melengkung dibuat dengan `radial-gradient` supaya kapsul menyatu dengan tepi layar.
+
+## Asisten suara
+
+Alur: *shortcut* global (`globalShortcut` di *main process*) atau tombol mikrofon mengirim `voice-trigger` ke jendela pulau. Pulau merekam, menghitung RMS tiap 50 ms, dan mengirim rekaman setelah ucapan terdeteksi (minimal 200 ms di atas ambang) lalu diam selama `aiSilence` detik. Tanpa ucapan selama 8 detik, sesi berakhir. Rekaman dikirim lewat IPC ke `ai.js`, yang memanggil `POST /audio/transcriptions`, `POST /chat/completions` (riwayat maksimal 12 pesan, `max_tokens` 350), lalu `POST /audio/speech` (mp3). Audio diputar lewat `AudioContext` supaya level suaranya bisa menggerakkan animasi; teks panjang bergulir mengikuti posisi audio.
+
+State di atribut `data-voice`: `listen` (biru), `think` (ungu, *orb* berputar cepat), `speak` (merah muda), `error` (merah). Setiap sesi punya nomor `run`; hasil yang datang setelah sesi dibatalkan diabaikan, dan `ai-cancel` membatalkan `fetch` yang masih berjalan.
+
+Daftar model diambil dari `GET /models` dan dikelompokkan menurut metadata bila ada, lalu menurut ID (`whisper`, `transcribe` untuk transkripsi; `tts` untuk suara; `embed`, `image`, `video` dan sejenisnya dibuang dari percakapan).
 
 ## Keamanan
 
 * `contextIsolation: true`, `nodeIntegration: false`.
 * CSP pada setiap halaman: sumber hanya dari aplikasi, koneksi hanya ke `https://lrclib.net`.
 * Preload hanya mengekspos fungsi yang dibutuhkan.
+* Kunci API asisten suara dienkripsi dengan `safeStorage` dan hanya dibaca di *main process*; `store-get` dan `store-set` menolak kunci `aiKey`. Semua panggilan jaringan ke penyedia AI dilakukan dari *main process*.
 * Teks dari pengguna dan pemutar selalu di-*escape* sebelum disisipkan ke HTML.
 
 ## Pembangunan

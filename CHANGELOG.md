@@ -2,6 +2,22 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.8.0] 2026-10-20
+
+### Ditambahkan
+- Asisten suara lewat Aivene (atau API lain yang kompatibel dengan OpenAI): tekan Ctrl+Alt+Spasi atau tombol mikrofon di pulau yang terbuka, bicara, lalu diam sebentar; Pulau menjawab dengan suara
+- Animasi khusus di pulau: *orb* berputar yang membesar mengikuti suara, batang gelombang, warna berbeda untuk mendengar, berpikir, berbicara, dan galat; jawaban panjang bergulir mengikuti suara
+- Pengaturan > Asisten Suara: kunci API (terenkripsi), URL API, *dropdown* model percakapan, transkripsi, dan suara yang diisi dari akun, enam pilihan suara, kecepatan, bahasa ucapan, jeda diam, mode ngobrol (lanjut mendengar), instruksi tambahan, dan tombol Dengarkan untuk mencoba suara
+- Item "Tanya Pulau (suara)" di menu logo dan *tray* saat asisten aktif
+
+### Dihapus
+- Agen AI pengendali komputer dari 0.6.x dan mode Otonom 0.7.0 tidak dibawa ke versi ini. Kunci Aivene yang pernah disimpan untuk agen dipakai ulang otomatis oleh asisten suara, dan pengaturan agen lama dibersihkan
+- Pembacaan notifikasi dengan suara Windows (0.6.1) tidak termasuk
+
+### Catatan teknis
+- Mikrofon hanya menyala setelah dipicu, dan rekaman dikirim sebagai webm/opus 32 kbps
+- Riwayat obrolan hanya di memori, dilupakan setelah 5 menit tanpa percakapan
+
 ## [0.5.3] 2026-10-20
 
 ### Diubah
