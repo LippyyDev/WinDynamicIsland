@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; font-src 'self'; connect-src https://lrclib.net; media-src 'self' blob:; style-src 'self' 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; font-src 'self'; connect-src https://lrclib.net; style-src 'self' 'unsafe-inline'">
 <title>Pulau</title>
 <link rel="stylesheet" href="base.css">
 <link rel="stylesheet" href="island.css">
@@ -52,13 +52,6 @@
     <div class="al-right" id="alRight"></div>
   </div>
 
-  <!-- SUARA: asisten AI, state lewat data-voice -->
-  <div class="view v-voice" id="voView">
-    <div class="vo-orb"></div>
-    <div class="vo-txt"><b id="voTitle"></b><div class="vo-sub"><span id="voSub"></span></div></div>
-    <div class="vo-bars" id="voBars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-  </div>
-
   <!-- EXPANDED -->
   <div class="view v-expanded">
     <header class="hd">
@@ -71,7 +64,6 @@
       </div>
       <div class="hd-right">
         <button class="hd-eq" id="hdEq" title="Musik"><span class="bars"><i></i><i></i><i></i><i></i></span></button>
-        <button class="ic sm" id="bMic" title="Tanya Pulau (suara)" hidden><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11.5" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button>
         <button class="ic sm" id="bSettings" title="Pengaturan">
           <svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
         </button>
@@ -199,7 +191,6 @@
 <script src="js/todo.js"></script>
 <script src="js/system.js"></script>
 <script src="js/menubar.js"></script>
-<script src="js/voice.js"></script>
 <script src="js/boot.js"></script>
 </body>
 </html>

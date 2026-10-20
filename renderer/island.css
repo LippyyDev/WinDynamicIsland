@@ -67,14 +67,12 @@ body.notch .c-left .art { width: min(26px, calc(var(--barh) - 6px)); height: min
 #island[data-mode="compact"]  { --r: 19px; }
 #island[data-mode="alert"]    { --r: 24px; }
 #island[data-mode="expanded"] { --r: 30px; }
-#island[data-mode="voice"]    { --r: 26px; }
 #island[data-mode="expanded"][data-tint="1"] .body::before { opacity: 1; }
 
 .view { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity .18s ease; }
 #island[data-mode="idle"] .v-idle,
 #island[data-mode="compact"] .v-compact,
 #island[data-mode="alert"] .v-alert,
-#island[data-mode="voice"] .v-voice,
 #island[data-mode="expanded"] .v-expanded { opacity: 1; pointer-events: auto; transition: opacity .28s ease .14s; }
 
 /* ================= umum ================= */
@@ -374,48 +372,3 @@ body.notch .c-left .art { width: min(26px, calc(var(--barh) - 6px)); height: min
 .todo-item:hover .del { opacity: 1; }
 .todo-item .del:hover { background: rgba(255, 255, 255, .1); }
 .t-empty { margin: auto; font-size: 12.5px; color: var(--txt3); text-align: center; line-height: 1.5; }
-
-/* ================= asisten suara ================= */
-.v-voice { display: flex; align-items: center; gap: 12px; padding: 0 16px 0 12px; cursor: default; }
-#island { --c1: #3aa0ff; --c2: #7c5cff; --c3: #35e0c8; --lv: 0; }
-#island[data-voice="think"] { --c1: #8b5cff; --c2: #ff5ac8; --c3: #4d7bff; }
-#island[data-voice="speak"] { --c1: #ff5a9a; --c2: #8b5cff; --c3: #ffb347; }
-#island[data-voice="error"] { --c1: #ff4d5e; --c2: #ff8a4d; --c3: #ff4d5e; }
-.vo-orb {
-  width: 34px; height: 34px; flex: none; position: relative; border-radius: 50%;
-  transform: scale(calc(.84 + var(--lv) * .34)); transition: transform .09s linear;
-  box-shadow: 0 0 calc(4px + var(--lv) * 22px) color-mix(in srgb, var(--c1) 70%, transparent);
-}
-.vo-orb::before {
-  content: ""; position: absolute; inset: 0; border-radius: 50%;
-  background: conic-gradient(var(--c1), var(--c2), var(--c3), var(--c1));
-  animation: voSpin 2.6s linear infinite;
-}
-.vo-orb::after {
-  content: ""; position: absolute; inset: 4px; border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, rgba(255, 255, 255, .5), transparent 42%), radial-gradient(circle, rgba(0, 0, 0, .15), rgba(0, 0, 0, .55));
-}
-#island[data-voice="think"] .vo-orb::before { animation-duration: .9s; }
-#island[data-voice="think"] .vo-orb { animation: voBreath 1.4s ease-in-out infinite; }
-#island[data-voice="error"] .vo-orb::before { animation: none; }
-@keyframes voSpin { to { transform: rotate(360deg); } }
-@keyframes voBreath { 50% { transform: scale(.92); } }
-.vo-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
-.vo-txt b { font-size: 11px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: color-mix(in srgb, var(--c1) 75%, #fff); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.vo-sub { overflow: hidden; font-size: 13.5px; line-height: 18px; font-weight: 600; max-height: 72px; }
-.vo-sub span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: transform .35s linear; }
-#island[data-voice="speak"] .vo-sub span { white-space: normal; overflow: visible; }
-#island[data-voice="speak"] .vo-sub.long { -webkit-mask-image: linear-gradient(transparent, #000 7px, #000 calc(100% - 7px), transparent); }
-#island[data-voice="error"] .vo-sub span { color: var(--txt2); font-weight: 500; font-size: 12.5px; white-space: normal; overflow: visible; }
-.vo-bars { flex: none; display: flex; align-items: center; gap: 3px; height: 26px; }
-.vo-bars i { width: 3px; height: 26px; border-radius: 2px; background: linear-gradient(var(--c1), var(--c2)); transform: scaleY(.18); transition: transform .08s linear; }
-#island[data-voice="think"] .vo-bars i { animation: voWave 1s ease-in-out infinite; }
-#island[data-voice="think"] .vo-bars i:nth-child(2) { animation-delay: -.85s; }
-#island[data-voice="think"] .vo-bars i:nth-child(3) { animation-delay: -.7s; }
-#island[data-voice="think"] .vo-bars i:nth-child(4) { animation-delay: -.55s; }
-#island[data-voice="think"] .vo-bars i:nth-child(5) { animation-delay: -.4s; }
-#island[data-voice="think"] .vo-bars i:nth-child(6) { animation-delay: -.25s; }
-#island[data-voice="think"] .vo-bars i:nth-child(7) { animation-delay: -.1s; }
-#island[data-voice="error"] .vo-bars { display: none; }
-@keyframes voWave { 0%, 100% { transform: scaleY(.2); } 50% { transform: scaleY(.7); } }
-#island:not([data-mode="voice"]) .vo-orb::before, #island:not([data-mode="voice"]) .vo-bars i { animation: none; }

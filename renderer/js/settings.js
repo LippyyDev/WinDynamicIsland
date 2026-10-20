@@ -115,72 +115,9 @@ $('#resetData').onclick = () => {
   }
 };
 
-/* ---------- asisten suara ---------- */
-const FALLBACK = { chat: ['gpt-4o-mini', 'gpt-4o', 'gemini-2.5-flash', 'claude-sonnet-4'], stt: ['whisper-1'], tts: ['tts-1', 'tts-1-hd'] };
-function setOpts(sel, list, cur) {
-  const ids = [...new Set([...(cur ? [cur] : []), ...list])];
-  sel.innerHTML = '';
-  for (const id of ids) { const o = document.createElement('option'); o.value = o.textContent = id; sel.appendChild(o); }
-  sel.value = cur || ids[0] || '';
-}
-function fillModels(m) {
-  setOpts($('#selChat'), m.chat, S.aiModel);
-  setOpts($('#selStt'), m.stt, S.aiStt);
-  setOpts($('#selTts'), m.tts, S.aiTts);
-}
-async function aiKeyRefresh() {
-  const has = await api.aiKeyHas();
-  $('#aiKeyState').textContent = has ? 'Tersimpan terenkripsi di PC ini. Tidak bisa ditampilkan lagi; simpan kunci baru untuk menggantinya.' : 'Belum disimpan. Disimpan terenkripsi di PC ini dan tidak pernah ditampilkan lagi.';
-  $('#aiKeyClear').disabled = !has;
-  return has;
-}
-let modelsBusy = false;
-async function loadModels(quiet) {
-  if (modelsBusy) return;
-  modelsBusy = true;
-  const st = $('#aiModelsState'), b = $('#aiModelsLoad');
-  b.disabled = true; st.textContent = 'Mengambil daftar model…';
-  const r = await api.aiModels();
-  modelsBusy = false; b.disabled = false;
-  if (r && r.ok) {
-    fillModels(r.value);
-    st.textContent = `${r.value.chat.length} model percakapan, ${r.value.stt.length} transkripsi, ${r.value.tts.length} suara dari akun Anda.`;
-  } else {
-    st.textContent = 'Gagal: ' + (r ? r.error : 'tidak diketahui') + ' Daftar bawaan dipakai.';
-    if (!quiet) toast('Gagal memuat model');
-  }
-}
-$('#aiKeySave').onclick = async () => {
-  const f = $('#aiKey'), r = await api.aiKeySet(f.value);
-  if (r.ok) { f.value = ''; toast('Kunci disimpan'); await aiKeyRefresh(); loadModels(true); }
-  else toast(r.error);
-};
-$('#aiKey').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#aiKeySave').click(); });
-$('#aiKeyClear').onclick = async () => { if (!confirm('Hapus kunci API?')) return; api.aiKeyClear(); toast('Kunci dihapus'); setTimeout(aiKeyRefresh, 150); };
-$('#aiModelsLoad').onclick = () => loadModels(false);
-let testAudio = null;
-$('#aiTest').onclick = async () => {
-  const st = $('#aiTestState'), b = $('#aiTest');
-  b.disabled = true; st.textContent = 'Membuat suara…';
-  const r = await api.aiSpeech('Halo, saya Pulau. Tekan shortcut, lalu tanyakan apa saja.');
-  b.disabled = false;
-  if (!r.ok) { st.textContent = 'Gagal: ' + r.error; return; }
-  if (testAudio) { testAudio.pause(); URL.revokeObjectURL(testAudio.src); }
-  testAudio = new Audio(URL.createObjectURL(new Blob([r.value], { type: 'audio/mpeg' })));
-  testAudio.play().catch(() => {});
-  st.textContent = 'Diputar dengan suara ' + S.aiVoice + ' dan model ' + S.aiTts + '.';
-};
-let modelsLoaded = false;
-$('#nav').addEventListener('click', async (e) => {
-  const a = e.target.closest('a');
-  if (a && a.dataset.s === 'suara' && !modelsLoaded) { modelsLoaded = true; if (await aiKeyRefresh()) loadModels(true); }
-});
-
 (async () => {
   S = await api.get('settings');
-  fillModels(FALLBACK);
   fill(); bind();
-  aiKeyRefresh();
   const as = $('#autostart');
   as.checked = await api.autostartGet();
   as.addEventListener('change', () => { api.autostartSet(as.checked); toast(); });

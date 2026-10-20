@@ -38,17 +38,5 @@ contextBridge.exposeInMainWorld('pulau', {
 
   dataFolder: () => ipcRenderer.send('data-folder'),
   dataReset: () => ipcRenderer.send('data-reset'),
-  version: () => ipcRenderer.invoke('version'),
-
-  onVoice: (cb) => on('voice-trigger', cb),
-  onVoiceKeyFail: (cb) => on('voice-shortcut-fail', cb),
-  voiceTrigger: () => ipcRenderer.send('voice-trigger'),
-  aiKeyHas: () => ipcRenderer.invoke('ai-key-has'),
-  aiKeySet: (k) => ipcRenderer.invoke('ai-key-set', k),
-  aiKeyClear: () => ipcRenderer.send('ai-key-clear'),
-  aiModels: () => ipcRenderer.invoke('ai-models'),
-  aiTranscribe: (bytes, mime) => ipcRenderer.invoke('ai-transcribe', bytes, mime),
-  aiChat: (history) => ipcRenderer.invoke('ai-chat', history),
-  aiSpeech: (text) => ipcRenderer.invoke('ai-speech', text),
-  aiCancel: () => ipcRenderer.send('ai-cancel')
+  version: () => ipcRenderer.invoke('version')
 });

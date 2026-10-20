@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; font-src 'self'; media-src 'self' blob:; style-src 'self' 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'unsafe-inline'">
 <title>Pengaturan Pulau</title>
 <link rel="stylesheet" href="base.css">
 <link rel="stylesheet" href="settings.css">
@@ -20,7 +20,6 @@
     <a data-s="pomodoro"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.2 1.6M9.5 2.5h5"/></svg>Pomodoro</a>
     <a data-s="minum"><svg viewBox="0 0 24 24"><path d="M12 3.5s6 6.4 6 10.5a6 6 0 0 1-12 0c0-4.1 6-10.5 6-10.5Z"/></svg>Minum Air</a>
     <a data-s="notif"><svg viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg>Notifikasi</a>
-    <a data-s="suara"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11.5" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>Asisten Suara</a>
     <a data-s="data"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="2.8"/><path d="M4.5 6v12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8"/></svg>Data</a>
   </nav>
   <div class="side-foot">Semua data tersimpan di PC ini.</div>
@@ -142,58 +141,6 @@
   </section>
 
   <!-- DATA -->
-  <!-- ASISTEN SUARA -->
-  <section data-s="suara">
-    <h1>Asisten Suara</h1>
-    <p class="lead">Tekan shortcut, bicara, lalu diam sebentar. Pulau menjawab dengan suara lewat Aivene. Hanya mengobrol: asisten ini tidak bisa mengendalikan komputer.</p>
-    <div class="card">
-      <label class="row"><div><b>Aktifkan asisten suara</b><span>Bila aktif, shortcut di bawah dan tombol mikrofon di pulau yang terbuka akan menyalakan mikrofon.</span></div><input type="checkbox" class="sw" data-k="aiEnabled"></label>
-      <div class="row"><div><b>Shortcut</b><span>Tekan sekali untuk mulai bicara. Tekan lagi saat mendengar untuk langsung mengirim, atau saat menjawab untuk menghentikan.</span></div>
-        <select class="sel" data-k="aiShortcut">
-          <option value="Control+Alt+Space">Ctrl + Alt + Spasi</option>
-          <option value="Control+Shift+Space">Ctrl + Shift + Spasi</option>
-          <option value="Alt+Shift+Space">Alt + Shift + Spasi</option>
-          <option value="Control+Alt+V">Ctrl + Alt + V</option>
-          <option value="Control+Alt+J">Ctrl + Alt + J</option>
-          <option value="F9">F9</option>
-        </select></div>
-      <div class="row"><div><b>Kunci API</b><span id="aiKeyState">Belum disimpan. Disimpan terenkripsi di PC ini dan tidak pernah ditampilkan lagi.</span></div>
-        <div class="inline"><input type="password" class="sel" id="aiKey" placeholder="isk-…" autocomplete="off" style="width:170px;cursor:text"><button class="btn" id="aiKeySave">Simpan</button><button class="btn" id="aiKeyClear">Hapus</button></div></div>
-      <div class="row"><div><b>URL API</b><span>Alamat API yang kompatibel dengan OpenAI. Untuk Aivene: https://api.aivene.com/v1</span></div><input type="text" class="sel" data-k="aiBase" maxlength="200" style="width:250px;cursor:text"></div>
-    </div>
-    <h2>Model dan suara</h2>
-    <div class="card">
-      <div class="row"><div><b>Daftar model</b><span id="aiModelsState">Diambil dari akun Aivene Anda setelah kunci disimpan.</span></div><button class="btn" id="aiModelsLoad">Muat ulang</button></div>
-      <div class="row"><div><b>Model percakapan</b><span>Otak asisten. Model kecil (misalnya gpt-4o-mini atau gemini-2.5-flash) lebih cepat dan murah untuk obrolan suara.</span></div><select class="sel" data-k="aiModel" id="selChat"></select></div>
-      <div class="row"><div><b>Model transkripsi</b><span>Mengubah ucapan Anda menjadi teks. Ditagih per detik audio.</span></div><select class="sel" data-k="aiStt" id="selStt"></select></div>
-      <div class="row"><div><b>Model suara</b><span>tts-1 lebih cepat, tts-1-hd lebih jernih. Ditagih per karakter jawaban.</span></div><select class="sel" data-k="aiTts" id="selTts"></select></div>
-      <div class="row"><div><b>Suara</b><span>Suara bawaan penyedia.</span></div>
-        <select class="sel" data-k="aiVoice">
-          <option value="nova">Nova (cerah, perempuan)</option>
-          <option value="shimmer">Shimmer (lembut, perempuan)</option>
-          <option value="alloy">Alloy (netral)</option>
-          <option value="fable">Fable (hangat, ekspresif)</option>
-          <option value="echo">Echo (tenang, laki-laki)</option>
-          <option value="onyx">Onyx (dalam, laki-laki)</option>
-        </select></div>
-      <div class="row"><div><b>Kecepatan bicara</b><span>1 adalah normal.</span></div><span class="num"><input type="number" data-k="aiSpeed" min="0.5" max="2" step="0.1"><em>×</em></span></div>
-      <div class="row"><div><b>Coba suara</b><span id="aiTestState">Memutar satu kalimat contoh (biaya sangat kecil).</span></div><button class="btn" id="aiTest">Dengarkan</button></div>
-    </div>
-    <h2>Percakapan</h2>
-    <div class="card">
-      <div class="row"><div><b>Bahasa ucapan</b><span>Membantu transkripsi lebih akurat. Otomatis bila Anda sering berganti bahasa.</span></div>
-        <select class="sel" data-k="aiLang">
-          <option value="id">Bahasa Indonesia</option>
-          <option value="en">English</option>
-          <option value="auto">Otomatis</option>
-        </select></div>
-      <div class="row"><div><b>Jeda diam sebelum menjawab</b><span>Setelah Anda berhenti bicara selama ini, rekaman dikirim. Naikkan bila Anda sering berhenti sejenak di tengah kalimat.</span></div><span class="num"><input type="number" data-k="aiSilence" min="0.6" max="5" step="0.1"><em>detik</em></span></div>
-      <label class="row"><div><b>Lanjut mendengar setelah menjawab</b><span>Mode ngobrol: mikrofon menyala lagi setelah Pulau selesai bicara. Berhenti sendiri bila 8 detik tidak ada suara.</span></div><input type="checkbox" class="sw" data-k="aiFollow"></label>
-      <div class="row"><div><b>Instruksi tambahan</b><span>Opsional. Misalnya: panggil saya LIP, jawab santai.</span></div><input type="text" class="sel" data-k="aiPersona" maxlength="300" placeholder="kosong" style="width:250px;cursor:text"></div>
-    </div>
-    <p class="lead" style="margin-top:14px">Riwayat obrolan hanya disimpan di memori selama 5 menit, lalu dilupakan. Audio dan teks dikirim ke penyedia API yang Anda pilih.</p>
-  </section>
-
   <section data-s="data">
     <h1>Data</h1>
     <p class="lead">Pulau tidak memakai akun atau server. Pengaturan, tugas, catatan minum, dan isi rak file disimpan sebagai satu file di folder aplikasi pada PC ini. Rak file hanya menyimpan lokasi file, bukan salinannya.</p>
