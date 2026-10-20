@@ -2,7 +2,7 @@
 
 *Dynamic Island* untuk Windows 10 dan 11. Sebuah kapsul hitam di tengah atas layar yang menampilkan pemutar musik dengan lirik tersinkron, timer Pomodoro, pengingat minum, rak file, daftar tugas, dan notifikasi sistem. Semua data tersimpan di PC sendiri, tanpa akun dan tanpa server.
 
-> Status: versi 0.5.3. Dibuat dengan Electron. Bagian yang membaca musik dan sistem dari Windows belum diuji pada banyak perangkat, jadi laporan *bug* sangat membantu.
+> Status: versi 0.6.0. Dibuat dengan Electron. Bagian yang membaca musik dan sistem dari Windows belum diuji pada banyak perangkat, jadi laporan *bug* sangat membantu.
 
 ## Fitur
 
@@ -24,6 +24,17 @@
 | Pengaturan | Jendela khusus untuk semua opsi, termasuk menyalakan atau mematikan tiap halaman. |
 
 Dokumen kebutuhan produk ada di [docs/PRD.md](docs/PRD.md), rancangan teknis di [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Agen AI (eksperimental)
+
+Pulau bisa menjadi "tangan" bagi model AI yang kompatibel dengan OpenAI (misalnya Aivene). Fitur ini **mati secara bawaan**: aktifkan di Pengaturan, bagian Agen AI, lalu isi URL API, ID model, dan kunci API (disimpan terenkripsi lewat DPAPI Windows, tidak pernah ditampilkan lagi).
+
+- **Jendela agen** (`Ctrl+Alt+A`): tulis tugas, lihat langkah dan penggunaan token, setujui atau tolak aksi.
+- **Aksi yang tersedia untuk model:** tangkapan layar, klik, gulir, ketik, tekan tombol, buka URL atau file berjalur lengkap, tunggu, bertanya ke pengguna. Tidak ada eksekusi perintah shell.
+- **Keamanan:** mode izin (bawaan: mengetik, tombol, dan buka file perlu persetujuan), batas langkah, tombol berhenti darurat `Ctrl+Alt+X`, jendela agen tidak ikut terekam di tangkapan layar, teks di layar diperlakukan sebagai data. Hanya layar utama yang dikendalikan.
+- **Status** agen tampil di pulau sebagai notifikasi.
+
+Model harus mendukung gambar dan pemanggilan fungsi. Awasi agen saat bekerja, dan pasang batas pengeluaran pada kunci API.
 
 ## Tampilan
 
@@ -65,7 +76,7 @@ npm run dist       # bangun installer di folder dist/
 
 Di Linux atau macOS, antarmuka tetap bisa dibuka untuk pengerjaan tampilan, tetapi data musik dan sistem tidak tersedia karena memakai PowerShell dan API Windows.
 
-*Installer* juga dibangun otomatis oleh GitHub Actions (`.github/workflows/build.yml`) pada setiap *push*. Untuk membuat rilis, beri *tag* `v0.5.3` dan hasilnya terlampir di halaman Releases.
+*Installer* juga dibangun otomatis oleh GitHub Actions (`.github/workflows/build.yml`) pada setiap *push*. Untuk membuat rilis, beri *tag* `v0.6.0` dan hasilnya terlampir di halaman Releases.
 
 ## Struktur proyek
 

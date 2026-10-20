@@ -85,6 +85,27 @@ $('#nav').addEventListener('click', (e) => {
 
 $('#openData').onclick = () => api.dataFolder();
 
+/* ---------- agen AI ---------- */
+async function keyRefresh() {
+  const has = await api.agentKeyHas();
+  $('#keyState').textContent = has ? 'Tersimpan terenkripsi di PC ini. Tidak bisa ditampilkan lagi; simpan kunci baru untuk menggantinya.' : 'Belum disimpan. Disimpan terenkripsi di PC ini dan tidak pernah ditampilkan lagi.';
+}
+$('#keySave').onclick = async () => {
+  const f = $('#agentKey'), r = await api.agentKeySet(f.value);
+  if (r.ok) { f.value = ''; toast('Kunci tersimpan'); } else toast(r.error);
+  keyRefresh();
+};
+$('#keyClear').onclick = async () => { await api.agentKeyClear(); toast('Kunci dihapus'); keyRefresh(); };
+$('#testBtn').onclick = async () => {
+  const b = $('#testBtn'), t = $('#testState');
+  b.disabled = true; t.textContent = 'Menguji…';
+  const r = await api.agentTest();
+  t.textContent = r.ok ? `Berhasil dalam ${r.ms} ms. Balasan model: "${r.reply}". Kemampuan gambar belum terbukti; coba satu tugas di jendela agen.` : 'Gagal: ' + r.error;
+  b.disabled = false;
+};
+$('#openAgent').onclick = () => api.openAgent();
+keyRefresh();
+
 /* ---------- penampil log ---------- */
 const escH = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 const fmtSize = (b) => (b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(2) + ' MB');

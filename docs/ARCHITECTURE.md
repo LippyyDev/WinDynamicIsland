@@ -85,6 +85,16 @@ Penggantinya memanfaatkan fakta bahwa area bilah dicadangkan AppBar, sehingga **
 * Antrean notifikasi dibatasi 8, cache sampul 40, cache nama exe 64, riwayat *undo* minum 20.
 * `[kinerja]` di log tiap 10 menit: total memori (`app.getAppMetrics`), *heap* proses utama, dan CPU. Peringatan dicatat bila memori lebih dari dua kali lipat nilai awal.
 
+### Agen AI (`agent.js`)
+
+Modul ini menjalankan *loop* agen di proses utama: tangkapan layar (`desktopCapturer`, layar utama, diperkecil ke lebar yang diatur) dikirim ke `POST {agentBase}/chat/completions` bersama definisi *tool*. Model membalas dengan `tool_calls`; setiap panggilan divalidasi, dimintakan izin sesuai `agentConfirm` (`ask`, `all`, `none`), dieksekusi, lalu tangkapan layar baru dikirim kembali. Hanya dua tangkapan layar terakhir yang dikirim ulang agar token hemat.
+
+- **Eksekusi input:** `user32.dll` lewat koffi (`SetCursorPos`, `mouse_event`, `keybd_event`, `SendInput` dengan `KEYEVENTF_UNICODE` untuk teks). Koordinat dari model berada di ruang tangkapan layar dan dikalikan faktor skala ke piksel fisik.
+- **Kunci API:** dienkripsi dengan `safeStorage` (DPAPI), disimpan di kunci store `agentKey`, dan tidak bisa dibaca atau ditimpa lewat IPC `store-get` dan `store-set`.
+- **Kendali:** `AbortController` untuk penghentian, pintasan global `Ctrl+Alt+X` hanya terdaftar selama agen berjalan, `Ctrl+Alt+A` membuka jendela agen.
+- **Jendela agen:** `renderer/agent.html` dengan `setContentProtection(true)` agar tidak terekam di tangkapan layar; peristiwa lewat IPC `agent-event`, status ringkas ke pulau lewat `agent-status`.
+- **Batasan:** hanya layar utama, tanpa tool shell, tanpa riwayat antar tugas.
+
 ### Log (`logger.js`)
 
 Satu file `pulau.log`, level `off`, `errors` (WARN dan ERROR), `all` (DEBUG sampai ERROR). Sumber log: proses utama, antarmuka lewat IPC `log` serta `window.onerror`, dan PowerShell lewat pesan `{"type":"log"}` di stdout. File diputar ke `pulau.old.log` setelah 2 MB. Pengaturan menampilkan 400 baris terakhir lewat IPC `log-tail`.

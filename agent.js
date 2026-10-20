@@ -2,7 +2,6 @@
 // Agen AI: loop panggilan model (API kompatibel OpenAI, misalnya Aivene) ditambah "tangan" untuk mengendalikan Windows.
 // Model hanya memutuskan aksi lewat tool calling; semua aksi dieksekusi di sini, dengan konfirmasi dan batas langkah.
 const { desktopCapturer, screen, shell } = require('electron');
-const { spawn } = require('child_process');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -98,8 +97,7 @@ const TOOLS = [
   fn('scroll', 'Gulir roda mouse di koordinat tertentu. dy positif menggulir ke bawah.', { ...XY, dy: { type: 'integer', description: 'Jumlah klik roda, -20 sampai 20' } }, ['x', 'y', 'dy']),
   fn('type_text', 'Ketik teks ke kolom yang sedang fokus. Klik kolomnya dulu bila perlu. Baris baru dikirim sebagai Enter.', { text: { type: 'string' } }, ['text']),
   fn('press_key', 'Tekan tombol atau kombinasi, misalnya "enter", "ctrl+c", "alt+tab", "win+d", "f5".', { keys: { type: 'string' } }, ['keys']),
-  fn('open_target', 'Buka URL http(s), file, folder, atau aplikasi (nama program seperti "notepad" atau "calc").', { target: { type: 'string' } }, ['target']),
-  fn('run_powershell', 'Jalankan satu perintah PowerShell dan kembalikan outputnya (maks 30 detik). Pakai hanya bila antarmuka grafis tidak praktis.', { command: { type: 'string' } }, ['command']),
+  fn('open_target', 'Buka URL http(s) atau file/folder dengan jalur lengkap (misalnya C:\\Users\\...). Untuk membuka aplikasi, tekan win, ketik namanya, lalu enter.', { target: { type: 'string' } }, ['target']),
   fn('wait', 'Tunggu beberapa detik, misalnya saat halaman atau aplikasi memuat.', { seconds: { type: 'number', description: '0.5 sampai 10' } }, ['seconds']),
   fn('ask_user', 'Tanya pengguna bila ada keputusan penting, data yang tidak diketahui, atau aksi berisiko. Jawabannya dikembalikan sebagai teks.', { question: { type: 'string' } }, ['question']),
   fn('finish', 'Akhiri tugas dengan ringkasan singkat dalam bahasa Indonesia, baik berhasil maupun tidak bisa diselesaikan.', { summary: { type: 'string' } }, ['summary'])
@@ -113,8 +111,8 @@ Never enter passwords or payment details. Do not delete files, send messages or 
 You have at most ${maxSteps} steps. When the task is done, or cannot be done, call finish with a short summary in Indonesian. Reply to the user in Indonesian.`;
 
 /* ---------------- agen ---------------- */
-const MUTATING = new Set(['click', 'type_text', 'press_key', 'open_target', 'run_powershell']);
-const ASK_MODE = new Set(['type_text', 'press_key', 'open_target', 'run_powershell']);
+const MUTATING = new Set(['click', 'type_text', 'press_key', 'open_target']);
+const ASK_MODE = new Set(['type_text', 'press_key', 'open_target']);
 
 class Agent {
   // opts: { settings(): object, key(): string, emit(evt), onRunning(bool) }
@@ -163,7 +161,6 @@ class Agent {
       case 'type_text': return `Mengetik: "${String(a.text).slice(0, 200)}"`;
       case 'press_key': return `Menekan tombol: ${a.keys}`;
       case 'open_target': return `Membuka: ${a.target}`;
-      case 'run_powershell': return `Menjalankan PowerShell: ${String(a.command).slice(0, 400)}`;
       default: return name;
     }
   }
@@ -252,27 +249,11 @@ class Agent {
         const t = String(a.target || '').trim();
         if (!t) throw new Error('Target kosong');
         if (/^https?:\/\//i.test(t)) { await shell.openExternal(t); return 'ok'; }
+        // hanya jalur file atau folder yang ada; nama program dibuka lewat menu Start (press_key win, type_text, enter)
+        if (!/^[a-zA-Z]:[\\/]/.test(t) && !t.startsWith('\\\\')) throw new Error('Gunakan jalur lengkap atau URL http(s). Untuk membuka aplikasi: tekan win, ketik namanya, lalu enter.');
         const err = await shell.openPath(t);
-        if (!err) return 'ok';
-        // nama program tanpa jalur, misalnya "notepad": serahkan ke shell Windows
-        await new Promise((res, rej) => {
-          const p = spawn('cmd.exe', ['/c', 'start', '""', t], { windowsHide: true, stdio: 'ignore', detached: true });
-          p.on('error', rej); p.on('exit', (c) => (c ? rej(new Error('Tidak bisa membuka: ' + t)) : res())); p.unref();
-        });
+        if (err) throw new Error('Tidak bisa membuka: ' + err);
         return 'ok';
-      }
-      case 'run_powershell': {
-        const cmd = String(a.command || '');
-        if (!cmd.trim()) throw new Error('Perintah kosong');
-        return await new Promise((res) => {
-          const p = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', cmd], { windowsHide: true });
-          let out = '';
-          const add = (d) => { if (out.length < 6000) out += d.toString(); };
-          p.stdout.on('data', add); p.stderr.on('data', add);
-          const timer = setTimeout(() => { try { p.kill(); } catch (_) {} out += '\n[dihentikan: lebih dari 30 detik]'; }, 30000);
-          p.on('error', (e) => { clearTimeout(timer); res('Gagal menjalankan: ' + e.message); });
-          p.on('close', (c) => { clearTimeout(timer); res(`exit ${c}\n${out.slice(0, 3000)}`); });
-        });
       }
       default: throw new Error('Tool tidak dikenal: ' + name);
     }
@@ -341,11 +322,11 @@ class Agent {
         if (finished || this.stopped) break;
         await sleep(name_settle(calls));
         last = await shot(maxW);
-        this.trimImages(messages);
         messages.push(this.img(last, `Layar sekarang (${last.w}x${last.h}).${acted ? '' : ' Tidak ada aksi yang dijalankan.'}`));
+        this.trimImages(messages);
       }
       if (this.stopped) { this.status('idle', 'Agen dihentikan'); result = { ok: false, error: 'Dihentikan' }; }
-      else if (!finished) { this.log('warn', `Batas ${maxSteps} langkah tercapai`); this.status('error', 'Batas langkah tercapai', `${maxSteps} langkah`); }
+      else if (!finished) { this.log('warn', `Batas ${maxSteps} langkah tercapai`); this.status('error', 'Batas langkah tercapai', `${maxSteps} langkah`); result = { ok: false, error: 'Batas langkah tercapai' }; }
     } catch (e) {
       const m = this.stopped ? 'Dihentikan' : e.message;
       this.log(this.stopped ? 'warn' : 'error', m);

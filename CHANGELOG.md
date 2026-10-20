@@ -2,6 +2,17 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.6.0] 2026-10-20
+
+### Ditambahkan
+- Agen AI (eksperimental, mati secara bawaan): model yang kompatibel dengan OpenAI, misalnya Aivene, dapat mengendalikan komputer lewat tangkapan layar, klik, gulir, ketik, dan tombol
+- Jendela agen (`Ctrl+Alt+A`), bagian Agen AI di Pengaturan (URL API, ID model, kunci API terenkripsi, mode izin, batas langkah, uji koneksi), dan status agen di pulau
+- Tombol berhenti darurat `Ctrl+Alt+X`, persetujuan per aksi, dan batas langkah
+
+### Keamanan
+- Kunci API dienkripsi dengan DPAPI Windows dan tidak bisa dibaca dari jendela antarmuka
+- Tidak ada tool eksekusi shell; jendela agen tidak ikut terekam di tangkapan layar agen
+
 ## [0.5.3] 2026-10-20
 
 ### Diubah
