@@ -170,6 +170,13 @@
       <label class="row"><div><b>Volume</b><span>Saat volume diubah atau dibisukan.</span></div><input type="checkbox" class="sw" data-k="notify.volume"></label>
       <label class="row"><div><b>Pengingat tugas</b><span>Saat jam pengingat tugas tiba.</span></div><input type="checkbox" class="sw" data-k="notify.todo"></label>
     </div>
+    <h2>Suara</h2>
+    <div class="card">
+      <label class="row"><div><b>Bacakan notifikasi</b><span>Judul notifikasi diucapkan dengan suara bawaan Windows (gratis, tanpa internet). Volume dan Caps Lock tidak dibacakan.</span></div><input type="checkbox" class="sw" data-k="notify.speak"></label>
+      <div class="row" data-when="notify.speak=true"><div><b>Suara</b><span>Daftar suara yang terpasang di Windows. Tambah suara lain di Pengaturan Windows, Waktu dan bahasa, Ucapan.</span></div>
+        <div class="inline"><select class="sel" data-k="notify.voice" id="voiceSel"><option value="">Bawaan sistem</option></select><button class="btn" id="voiceTest">Coba</button></div></div>
+      <label class="row" data-when="notify.speak=true"><div><b>Kecepatan</b></div><span class="num"><input type="number" data-k="notify.rate" min="0.5" max="2" step="0.1"><em>x</em></span></label>
+    </div>
   </section>
 
   <!-- DATA -->

@@ -85,6 +85,25 @@ $('#nav').addEventListener('click', (e) => {
 
 $('#openData').onclick = () => api.dataFolder();
 
+/* ---------- suara notifikasi ---------- */
+function loadVoices() {
+  const sel = $('#voiceSel'); if (!sel || !window.speechSynthesis) return;
+  const vs = speechSynthesis.getVoices();
+  if (!vs.length || sel.options.length > 1) return;
+  for (const v of vs) { const o = document.createElement('option'); o.value = v.name; o.textContent = `${v.name} (${v.lang})`; sel.appendChild(o); }
+  if (S) fill();
+}
+if (window.speechSynthesis) { speechSynthesis.onvoiceschanged = loadVoices; loadVoices(); }
+$('#voiceTest').onclick = () => {
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance('Mengisi daya. Pengisi daya tersambung.');
+  const v = speechSynthesis.getVoices().find((x) => x.name === $('#voiceSel').value);
+  if (v) u.voice = v; else u.lang = 'id-ID';
+  u.rate = Number(S && S.notify.rate) || 1;
+  speechSynthesis.speak(u);
+};
+
 /* ---------- agen AI ---------- */
 async function keyRefresh() {
   const has = await api.agentKeyHas();

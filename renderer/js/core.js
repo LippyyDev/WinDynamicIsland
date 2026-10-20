@@ -70,6 +70,23 @@ function chime(kind = 'soft') {
   } catch (_) {}
 }
 
+/* ---------- suara bacaan notifikasi (TTS bawaan Windows, gratis dan offline) ---------- */
+const NO_SPEAK = new Set(['vol', 'caps', 'agent']); // terlalu sering atau sudah punya status sendiri
+function speak(a) {
+  const n = P.S && P.S.notify;
+  if (!n || !n.speak || !a || NO_SPEAK.has(a.id) || !window.speechSynthesis) return;
+  try {
+    const text = [a.title, a.sub].filter(Boolean).join('. ');
+    if (!text) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = n.voice && speechSynthesis.getVoices().find((x) => x.name === n.voice);
+    if (v) u.voice = v; else u.lang = 'id-ID';
+    u.rate = Math.max(0.5, Math.min(2, Number(n.rate) || 1));
+    speechSynthesis.speak(u);
+  } catch (_) {}
+}
+
 /* ---------- notifikasi di island ---------- */
 function notify(a) {
   if (a.id && P.alert && P.alert.id === a.id) {
@@ -89,6 +106,7 @@ function nextAlert() {
   if (P.alert) {
     paintAlert(); armAlert(); P.lastActive = Date.now();
     if (P.alert.sound) chime(P.alert.sound);
+    speak(P.alert);
   }
   render();
 }

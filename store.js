@@ -35,7 +35,7 @@ const DEFAULTS = {
     pages: { music: true, pomodoro: true, water: true, shelf: true, todo: true },
     pomo: { focus: 25, short: 5, long: 15, every: 4, sound: true, autoNext: false },
     water: { remind: true, goal: 2000, cup: 250, interval: 60, start: 8, end: 22 },
-    notify: { charging: true, lowBattery: true, lowAt: 20, headphones: true, caps: true, volume: true, todo: true }
+    notify: { charging: true, lowBattery: true, lowAt: 20, headphones: true, caps: true, volume: true, todo: true, speak: false, voice: '', rate: 1 }
   },
   todos: [],
   water: { log: {}, lastDrink: 0, lastRemind: 0 },

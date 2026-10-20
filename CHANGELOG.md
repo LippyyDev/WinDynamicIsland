@@ -2,6 +2,13 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.6.1] 2026-10-20
+
+### Ditambahkan
+- Bacakan notifikasi (mati secara bawaan): judul dan keterangan notifikasi diucapkan dengan TTS bawaan Windows lewat Web Speech API, gratis dan tanpa internet
+- Pilihan suara dari daftar suara Windows yang terpasang, tombol Coba, dan kecepatan 0,5 sampai 2x
+- Notifikasi volume, Caps Lock, dan status agen tidak dibacakan agar tidak berisik
+
 ## [0.6.0] 2026-10-20
 
 ### Ditambahkan
