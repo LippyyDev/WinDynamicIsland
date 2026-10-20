@@ -43,12 +43,14 @@
     </div>
     <h2>Keamanan</h2>
     <div class="card">
-      <div class="row"><div><b>Minta izin untuk</b><span>Setiap aksi di bawah ini muncul di jendela agen dan di pulau, menunggu Anda menyetujui. Standar: mengetik, menekan tombol, dan membuka file. Semua aksi: klik juga. Tanpa izin: berbahaya, agen jalan sendiri.</span></div>
+      <div class="row"><div><b>Minta izin untuk</b><span>Otonom: agen mengklik, mengetik, dan menekan tombol sendiri, lalu berhenti meminta izin hanya untuk aksi berisiko (perintah sistem, terminal, jendela kata sandi atau pembayaran, menjalankan program, pengaturan Pulau). Mengetik, tombol, buka file: lebih ketat. Semua aksi: klik juga. Tanpa izin: berbahaya, tidak ada yang ditahan sama sekali.</span></div>
         <select class="sel" data-k="agentConfirm">
+          <option value="auto">Otonom (hanya aksi berisiko)</option>
           <option value="ask">Mengetik, tombol, buka file</option>
           <option value="all">Semua aksi</option>
           <option value="none">Tanpa izin (berbahaya)</option>
         </select></div>
+      <div class="row" data-when="agentConfirm=auto"><div><b>Aplikasi yang diizinkan</b><span>Opsional. Nama aplikasi atau exe dipisah koma, misalnya: chrome, explorer, code, notepad. Aksi di aplikasi lain akan ditahan. Kosongkan agar agen bebas di semua aplikasi.</span></div><input type="text" class="sel" data-k="agentApps" maxlength="300" placeholder="semua aplikasi" style="width:200px;cursor:text"></div>
       <div class="row"><div><b>Batas langkah</b><span>Agen berhenti sendiri setelah sekian langkah, supaya biaya tidak membengkak.</span></div><span class="num"><input type="number" data-k="agentMaxSteps" min="3" max="100" step="1"><em>langkah</em></span></div>
       <div class="row"><div><b>Lebar tangkapan layar</b><span>Makin kecil makin hemat token, tetapi teks kecil sulit dibaca model.</span></div><span class="num"><input type="number" data-k="agentShotW" min="640" max="1920" step="64"><em>px</em></span></div>
     </div>

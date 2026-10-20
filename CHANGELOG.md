@@ -2,6 +2,14 @@
 
 Mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/) dan [Semantic Versioning](https://semver.org/lang/id/).
 
+## [0.7.0] 2026-10-20
+
+### Ditambahkan
+- Mode izin Otonom untuk agen AI, sekarang menjadi bawaan: klik, ketik, dan tombol dijalankan langsung tanpa persetujuan, agen hanya berhenti untuk aksi berisiko
+- Aksi yang tetap ditahan: kombinasi seperti `Win+R`, `Win+X`, `Ctrl+Shift+Esc`, `Shift+Delete`; teks berupa perintah sistem (PowerShell, `reg`, `del`, `curl`, dan sejenisnya); mengetik di terminal atau Registry Editor; jendela pengelola kata sandi, perbankan, atau pembayaran; membuka file yang bisa dijalankan (`.exe`, `.bat`, `.ps1`, `.lnk`, dan lainnya); mengubah Pengaturan Pulau
+- Daftar aplikasi yang diizinkan (opsional): aksi di luar aplikasi tersebut ikut ditahan
+- Alasan penahanan tampil di jendela agen, dan log menandai aksi otonom dengan `[otonom]`
+
 ## [0.6.1] 2026-10-20
 
 ### Ditambahkan
